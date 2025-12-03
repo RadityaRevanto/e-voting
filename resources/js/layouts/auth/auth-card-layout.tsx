@@ -1,4 +1,4 @@
-import AppLogoIcon from '@/components/app-logo-icon';
+import AppLogoIcon from '@/pages/dashboard/_components/app-logo-icon';
 import {
     Card,
     CardContent,

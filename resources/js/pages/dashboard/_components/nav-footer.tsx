@@ -1,4 +1,4 @@
-import { Icon } from '@/components/icon';
+import { Icon } from '@/pages/dashboard/_components/icon';
 import {
     SidebarGroup,
     SidebarGroupContent,
