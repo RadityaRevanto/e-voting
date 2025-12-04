@@ -472,13 +472,13 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-hidden ring-sidebar-ring transition-all duration-200 focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-gradient-to-r hover:from-[#6B73C1] hover:to-[#8B94D4] hover:text-white hover:[&>a>svg]:text-white hover:[&>a>span]:text-white hover:[&>svg]:text-white hover:[&>span]:text-white active:bg-gradient-to-r active:from-[#6B73C1] active:to-[#8B94D4] active:text-white active:[&>a>svg]:text-white active:[&>a>span]:text-white active:[&>svg]:text-white active:[&>span]:text-white data-[active=true]:bg-gradient-to-r data-[active=true]:from-[#6B73C1] data-[active=true]:to-[#8B94D4] data-[active=true]:font-bold data-[active=true]:text-white data-[active=true]:[&>a>svg]:text-white data-[active=true]:[&>a>span]:text-white data-[active=true]:[&>svg]:text-white data-[active=true]:[&>span]:text-white data-[state=open]:hover:bg-gradient-to-r data-[state=open]:hover:from-[#6B73C1] data-[state=open]:hover:to-[#8B94D4] data-[state=open]:hover:text-white data-[state=open]:hover:[&>a>svg]:text-white data-[state=open]:hover:[&>a>span]:text-white data-[state=open]:hover:[&>svg]:text-white data-[state=open]:hover:[&>span]:text-white",
   {
     variants: {
       variant: {
-        default: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        default: "hover:bg-gradient-to-r hover:from-[#6B73C1] hover:to-[#8B94D4] hover:text-white hover:[&>a>svg]:text-white hover:[&>a>span]:text-white hover:[&>svg]:text-white hover:[&>span]:text-white",
         outline:
-          "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
+          "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-gradient-to-r hover:from-[#6B73C1] hover:to-[#8B94D4] hover:text-white hover:[&>a>svg]:text-white hover:[&>a>span]:text-white hover:[&>svg]:text-white hover:[&>span]:text-white hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
       },
       size: {
         default: "h-8 text-sm",
