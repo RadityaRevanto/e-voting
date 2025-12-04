@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('registered_vote', function (Blueprint $table) {
             $table->string('hashed_vote', length:64)->primary();
-            $table->timestamps();
         });
     }
 
