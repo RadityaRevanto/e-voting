@@ -19,13 +19,11 @@ export default function PaslonDashboardPage(): React.ReactElement {
         </header>
 
         <div className="grid grid-cols-12 gap-4 md:gap-5 xl:gap-6">
-          {/* Bagian Kiri - Calendar di atas, Vision & Mission di bawah */}
           <div className="col-span-12 md:col-span-12 lg:col-span-8 xl:col-span-8 space-y-4 md:space-y-5 xl:space-y-6">
             <CalendarSection />
             <VisionMissionSection />
           </div>
 
-          {/* Bagian Kanan - Voting Process */}
           <div className="col-span-12 md:col-span-12 lg:col-span-4 xl:col-span-4 space-y-4 md:space-y-5 xl:space-y-6">
             <VotingProcessSection />
           </div>

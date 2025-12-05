@@ -15,10 +15,13 @@ Route::get('/', function () {
 //         return Inertia::render('dashboard');
 //     })->name('dashboard');
 
-    Route::get('/dashboard', function () {
-        return Inertia::render('dashboard/paslon/dashboard/page');
-    })->name('dashboard');
-    
+    // Paslon Dashboard Routes
+    Route::prefix('paslon')->group(function () {
+        Route::get('dashboard', function () {
+            return Inertia::render('dashboard/paslon/dashboard/page');
+        })->name('paslon.dashboard');
+    });
+
     // Admin Dashboard Routes
     Route::prefix('admin')->group(function () {
         Route::get('dashboard', function () {
@@ -27,4 +30,4 @@ Route::get('/', function () {
     });
 // });
 
-require __DIR__.'/settings.php';
+require __DIR__ . '/settings.php';
