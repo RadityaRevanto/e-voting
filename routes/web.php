@@ -15,6 +15,10 @@ Route::get('/', function () {
 //         return Inertia::render('dashboard');
 //     })->name('dashboard');
 
+    Route::get('/dashboard', function () {
+        return Inertia::render('dashboard/paslon/dashboard/page');
+    })->name('dashboard');
+    
     // Admin Dashboard Routes
     Route::prefix('admin')->group(function () {
         Route::get('dashboard', function () {
