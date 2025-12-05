@@ -1,0 +1,97 @@
+"use client"
+
+import * as React from "react"
+import {
+  Home,
+  CheckSquare,
+  FileText,
+  Sparkles,
+  Settings2,
+  LogOut,
+} from "lucide-react"
+import { Link } from "@inertiajs/react"
+
+import { NavMain } from "@/pages/dashboard/_components/nav-main"
+import { NavUserProfile } from "@/pages/dashboard/_components/nav-user-profile"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarRail,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar"
+
+// This is sample data.
+const data = {
+  user: {
+    name: "Aditya Eka",
+    email: "aditya@example.com",
+    avatar: "/avatars/shadcn.jpg",
+  },
+  navMain: [
+    {
+      title: "Dashboard",
+      url: "/admin/dashboard",
+      icon: Home,
+      isActive: true,
+    },
+    {
+      title: "Vote",
+      url: "#",
+      icon: CheckSquare,
+    },
+    {
+      title: "Vote Guideline",
+      url: "#",
+      icon: FileText,
+    },
+    {
+      title: "Generate",
+      url: "#",
+      icon: Sparkles,
+    },
+    {
+      title: "Settings",
+      url: "#",
+      icon: Settings2,
+    },
+  ],
+}
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  return (
+    <Sidebar 
+      collapsible="icon" 
+      variant="floating"
+      className="[&>div[data-slot='sidebar-inner']]:bg-[#eaedff] [&>div[data-slot='sidebar-inner']]:rounded-r-2xl [&>div[data-slot='sidebar-inner']]:rounded-l-none [&>div[data-slot='sidebar-inner']]:border-r-0 [&>div[data-slot='sidebar-inner']]:shadow-none"
+      {...props}
+    >
+      <SidebarHeader className="border-b-0">
+        <NavUserProfile user={data.user} />
+      </SidebarHeader>
+      <SidebarContent className="px-2 group-data-[collapsible=icon]:px-1">
+        <NavMain items={data.navMain} />
+      </SidebarContent>
+      <SidebarFooter className="border-t-0 px-2 pb-4 group-data-[collapsible=icon]:px-1">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              asChild 
+              tooltip="Log-Out"
+              className="group-data-[collapsible=icon]:justify-center"
+            >
+              <Link href="#" className="flex items-center gap-6 group-data-[collapsible=icon]:justify-center transition-colors duration-200 w-full">
+                <LogOut className="h-7 w-7 flex-shrink-0 text-[#53599b] peer-hover/menu-button:text-white transition-colors duration-200" />
+                <span className="group-data-[collapsible=icon]:hidden font-bold text-lg text-[#53599b] peer-hover/menu-button:text-white transition-colors duration-200">Log-Out</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
+  )
+}
