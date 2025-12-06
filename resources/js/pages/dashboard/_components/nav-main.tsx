@@ -1,4 +1,5 @@
 import { type LucideIcon } from "lucide-react"
+import { Link } from "@inertiajs/react"
 import {
   SidebarGroup,
   SidebarMenu,
@@ -22,7 +23,7 @@ export function NavMain({
 }) {
   return (
     <SidebarGroup>
-      <SidebarMenu className="space-y-1">
+      <SidebarMenu className="space-y-2">
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>
             <SidebarMenuButton 
@@ -31,10 +32,17 @@ export function NavMain({
               isActive={item.isActive}
               className="group-data-[collapsible=icon]:justify-center"
             >
-              <a href={item.url} className="flex items-center gap-6 group-data-[collapsible=icon]:justify-center transition-colors duration-200 w-full">
+              <Link 
+                href={item.url} 
+                className={`flex items-center gap-5 group-data-[collapsible=icon]:justify-center transition-all duration-200 w-full px-5 py-4 rounded-2xl ${
+                  item.isActive 
+                    ? 'bg-gradient-to-r from-[#6A5ACD] to-[#9370DB] shadow-md' 
+                    : 'hover:bg-gray-100'
+                }`}
+              >
                 {item.icon && (
                   <item.icon 
-                    className={`h-7 w-7 flex-shrink-0 transition-colors duration-200 ${
+                    className={`h-8 w-8 flex-shrink-0 transition-colors duration-200 ${
                       item.isActive 
                         ? 'text-white' 
                         : 'text-[#53599b] peer-hover/menu-button:text-white'
@@ -42,7 +50,7 @@ export function NavMain({
                   />
                 )}
                 <span 
-                  className={`group-data-[collapsible=icon]:hidden font-bold text-lg transition-colors duration-200 ${
+                  className={`group-data-[collapsible=icon]:hidden font-semibold text-xl transition-colors duration-200 ${
                     item.isActive 
                       ? 'text-white' 
                       : 'text-[#53599b] peer-hover/menu-button:text-white'
@@ -50,7 +58,7 @@ export function NavMain({
                 >
                   {item.title}
                 </span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         ))}
