@@ -32,7 +32,7 @@ export default function AdminVoteGuidelinePage() {
     return (
         <AdminDashboardlayout>
             <div className="bg-white w-full min-h-screen p-4 sm:p-6 md:p-8">
-                <div className="max-w-5xl ">
+                <div className="w-full ">
                     <header className="mb-6 sm:mb-8 md:mb-12">
                         <h1 className="font-bold text-[#53589a] text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 sm:mb-4">
                             VOTERS GUIDLINE
