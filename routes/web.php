@@ -33,6 +33,12 @@ Route::get('/', function () {
         Route::get('vote', function () {
             return Inertia::render('dashboard/admin/vote/page');
         })->name('admin.vote');
+        Route::get('vote/tambah', function () {
+            return Inertia::render('dashboard/admin/vote/tambah/page');
+        })->name('admin.vote.tambah');
+        Route::get('vote/hapus', function () {
+            return Inertia::render('dashboard/admin/vote/hapus/page');
+        })->name('admin.vote.hapus');
         Route::get('generate', function () {
             return Inertia::render('dashboard/admin/generate/page');
         })->name('admin.generate');
