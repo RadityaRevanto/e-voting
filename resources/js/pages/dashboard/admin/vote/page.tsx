@@ -1,0 +1,23 @@
+import AdminDashboardlayout from "../../_components/adminlayout";
+
+export default function AdminVotePage() {
+    return (
+        <AdminDashboardlayout>
+            <div className="bg-white w-full min-h-screen p-8">
+                <div className="max-w-5xl">
+                    <header className="mb-12">
+                        <h1 className="font-bold text-[#53589a] text-5xl mb-4"> 
+                            VOTE MANAGEMENT
+                        </h1>
+                        <div className="w-1/2 h-0.5 bg-[#030303]" />
+                    </header>       
+                    <main>
+                        <p className="text-lg text-gray-700">
+                            This is the Vote Management Page. Here you can manage all voting-related settings and configurations.
+                        </p>
+                    </main>
+                </div>
+            </div>
+        </AdminDashboardlayout>
+    );
+}

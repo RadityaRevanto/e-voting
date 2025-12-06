@@ -27,7 +27,26 @@ Route::get('/', function () {
         Route::get('dashboard', function () {
             return Inertia::render('dashboard/admin/dashboard/page');
         })->name('admin.dashboard');
+        Route::get('voteguideline', function () {
+            return Inertia::render('dashboard/admin/voteguideline/page');
+        })->name('admin.voteguideline');
+        Route::get('vote', function () {
+            return Inertia::render('dashboard/admin/vote/page');
+        })->name('admin.vote');
+        Route::get('generate', function () {
+            return Inertia::render('dashboard/admin/generate/page');
+        })->name('admin.generate');
+        Route::get('settings', function () {
+            return Inertia::render('dashboard/admin/settings/page');
+        })->name('admin.settings');
     });
+
+    Route::prefix('voter')->group(function () {
+        Route::get('dashboard', function () {
+            return Inertia::render('dashboard/admin/voteguideline/page');
+        })->name('voter.dashboard');
+    });
+
 // });
 
 require __DIR__ . '/settings.php';
