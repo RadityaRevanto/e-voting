@@ -36,7 +36,7 @@ export const OngoingElectionSection: React.FC = () => {
               aria-label="Vote now for Village Head Election"
               variant="outline"
             >
-              Vote Now
+              View Now
             </Button>
           </div>
 
