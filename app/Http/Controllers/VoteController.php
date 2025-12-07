@@ -11,12 +11,13 @@ use Illuminate\Support\Facades\DB;
 
 class VoteController extends Controller
 {
-    public function create() {
-        // dummy data
-        $warga_nik = hash('sha256', 'JAVIER GAVRA ABHINAYA');
-        $paslon_id = '2';
+    public function create(Request $request) {
+        $request->validate([
+            'warga_nik' => 'required',
+            'paslon_id' => 'required',
+        ]);
 
-        if (!Warga::where('nik', $warga_nik)->exists()) {
+        if (!Warga::where('nik', $request->warga_nik)->exists()) {
             return response()->json([
                 'success' => false,
                 'message' => "NIK not found",
@@ -24,8 +25,8 @@ class VoteController extends Controller
         }
 
         $vote = Vote::create([
-            'warga_nik' => $warga_nik,
-            'paslon_id' => $paslon_id,
+            'warga_nik' => $request->warga_nik,
+            'paslon_id' => $request->paslon_id,
         ]);
 
         $plainVote = $vote->warga_nik. "|" .$vote->paslon_id. "|" .$vote->created_at;
