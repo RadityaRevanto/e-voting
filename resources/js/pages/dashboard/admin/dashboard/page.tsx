@@ -6,7 +6,7 @@ import { OngoingElectionSection } from "./components/OngoingElectionSection";
 import { VotingProcessSection } from "./components/VotingProcessSection";
 import { CalendarSection } from "./components/CalendarSection";
 
-const AdminDashboardPage: React.FC = () => {
+export function AdminDashboardPage() {
   return (
     <AdminDashboardlayout>
       <div className="bg-white w-full min-h-screen p-4 md:p-6 xl:p-8">
