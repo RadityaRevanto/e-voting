@@ -30,14 +30,14 @@ export function NavMain({
               asChild 
               tooltip={item.title} 
               isActive={item.isActive}
-              className="group-data-[collapsible=icon]:justify-center"
+              className="group-data-[collapsible=icon]:justify-center rounded-2xl"
             >
               <Link 
                 href={item.url} 
                 className={`flex items-center gap-5 group-data-[collapsible=icon]:justify-center transition-all duration-200 w-full px-5 py-4 rounded-2xl ${
                   item.isActive 
-                    ? 'bg-gradient-to-r from-[#6A5ACD] to-[#9370DB] shadow-md' 
-                    : 'hover:bg-gray-100'
+                    ? 'bg-gradient-to-r from-[#6A5ACD] to-[#9370DB] shadow-md text-white' 
+                    : 'text-[#53599b] group-hover/menu-item:text-white'
                 }`}
               >
                 {item.icon && (
@@ -45,7 +45,7 @@ export function NavMain({
                     className={`h-8 w-8 flex-shrink-0 transition-colors duration-200 ${
                       item.isActive 
                         ? 'text-white' 
-                        : 'text-[#53599b] peer-hover/menu-button:text-white'
+                        : 'text-[#53599b] group-hover/menu-item:text-white'
                     }`} 
                   />
                 )}
@@ -53,7 +53,7 @@ export function NavMain({
                   className={`group-data-[collapsible=icon]:hidden font-semibold text-xl transition-colors duration-200 ${
                     item.isActive 
                       ? 'text-white' 
-                      : 'text-[#53599b] peer-hover/menu-button:text-white'
+                      : 'text-[#53599b] group-hover/menu-item:text-white'
                   }`}
                 >
                   {item.title}
