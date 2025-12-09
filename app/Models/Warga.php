@@ -6,12 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Warga extends Model
 {
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'warga';
+    protected $primaryKey = 'nik';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    public $timestamps = true;
+    const UPDATED_AT = null;
 
     protected $fillable = [
         'nik',

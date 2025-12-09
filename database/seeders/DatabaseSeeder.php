@@ -35,10 +35,10 @@ class DatabaseSeeder extends Seeder
             'misi' => 'Lorem ipsum dolor sit amet consectetur, adipisicing elit. Itaque autem reiciendis, porro atque nam accusantium. Saepe eius atque eaque fugit quis quia? Quae cupiditate, laudantium inventore aperiam itaque ratione esse molestiae ab dolor perspiciatis porro placeat labore unde, tenetur nemo vitae deleniti pariatur quisquam alias eveniet sequi accusamus. Inventore minima vitae expedita repellendus excepturi officia consequatur enim perspiciatis omnis asperiores. A, sapiente? Sit blanditiis quod, vel accusantium, amet esse natus, totam alias impedit quae dolor veniam illo architecto iusto dolorem expedita iure consectetur culpa. Debitis voluptate, magnam, error quidem sapiente numquam illo blanditiis, quos assumenda autem explicabo consectetur mollitia doloremque!'
         ]);
 
-        DB::table('warga')->insert([
+        Warga::create([
             'nik' => 'cb46aa542611fd3d74fdf5f41bef87b955028c4fd3fbf2bbe7d04410fdb6503b'
         ]);
-        DB::table('warga')->insert([
+        Warga::create([
             'nik' => 'af3cb1b8d80ad898d542685c1850ceb15dfca12420a7d0a8d31e57b7db501fad'
         ]);
     }
