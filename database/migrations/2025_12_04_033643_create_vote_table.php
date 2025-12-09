@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('vote', function (Blueprint $table) {
             $table->id();
-            $table->string('warga_nik', length:64);
+            $table->string('warga_nik', length:64)->unique();
             $table->integer('paslon_id');
             $table->timestamp('created_at');
             

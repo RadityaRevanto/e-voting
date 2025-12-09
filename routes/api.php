@@ -1,8 +1,13 @@
 <?php
 
 use App\Http\Controllers\VoteController;
+use App\Http\Controllers\WargaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+Route::group(['prefix' => 'admin'], function () {
+    Route::post('/register-nik', [WargaController::class, 'registerNik']);
+});
 
 Route::group(['prefix' => 'vote'], function () {
     Route::post('/create', [VoteController::class, 'create']);

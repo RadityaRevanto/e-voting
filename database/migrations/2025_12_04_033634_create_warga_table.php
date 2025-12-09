@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('warga', function (Blueprint $table) {
             $table->string('nik', length:64)->primary();
-            $table->timestamps();
+            $table->timestamp('created_at');
         });
     }
 
