@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Paslon extends Model
 {
@@ -20,4 +21,8 @@ class Paslon extends Model
         'visi',
         'misi'
     ];
+
+    public function votes() : HasMany {
+        return $this->hasMany(Vote::class);
+    }
 }
