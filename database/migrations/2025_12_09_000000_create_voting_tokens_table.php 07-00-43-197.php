@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('signature', 255);
             $table->timestamp('expires_at');
             $table->boolean('is_used')->default(false);
+            $table->timestamp('used_at')->nullable();
             $table->timestamps();
             
             // Foreign key to warga table

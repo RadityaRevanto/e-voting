@@ -41,5 +41,8 @@ class DatabaseSeeder extends Seeder
         Warga::create([
             'nik' => 'af3cb1b8d80ad898d542685c1850ceb15dfca12420a7d0a8d31e57b7db501fad'
         ]);
+        Warga::create([
+            'nik' => '3201234567890213'
+        ]);
     }
 }
