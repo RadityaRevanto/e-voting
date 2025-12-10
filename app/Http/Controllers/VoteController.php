@@ -48,7 +48,7 @@ class VoteController extends Controller
         ], 200);
     }
 
-    public function validate() {
+    public function lifeResult() {
         $votes = Vote::all();
         $paslonVoteMapping = [];
 
@@ -60,7 +60,6 @@ class VoteController extends Controller
         for ($i = 1; $i <= Paslon::count(); $i++) { 
             $paslonVoteMapping['paslon'.$i] = 0;
         }
-        $paslonVoteMapping['golput'] = Warga::count() - $votes->count();
         $paslonVoteMapping['kecurangan'] = 0;
 
         // Cek data vote dengan hash yang terdaftar
@@ -80,6 +79,21 @@ class VoteController extends Controller
             'success' => true,
             'message' => "Data vote",
             'data' => $paslonVoteMapping,
+        ], 200);
+    }
+    
+    public function votingProcess() {
+        $voteAmount = Vote::count();
+        $vilagerAmount = Warga::count();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Data vote",
+            'data' => [
+                'vilagerTotal' => $vilagerAmount,
+                'voteTotal' => $voteAmount,
+                'golput' => $vilagerAmount - $voteAmount,
+            ],
         ], 200);
     }
 }
