@@ -52,10 +52,15 @@ class VoteController extends Controller
         $votes = Vote::all();
         $paslonVoteMapping = [];
 
+        if (Vote::count() != RegisteredVote::count()) {
+            return HttpStatus::code409('Manipulasi terdeteksi');
+        }
+
         // Mapping return value
         for ($i = 1; $i <= Paslon::count(); $i++) { 
             $paslonVoteMapping['paslon'.$i] = 0;
         }
+        $paslonVoteMapping['golput'] = Warga::count() - $votes->count();
         $paslonVoteMapping['kecurangan'] = 0;
 
         // Cek data vote dengan hash yang terdaftar
