@@ -17,7 +17,8 @@ Route::group(['prefix' => 'paslon'], function () {
 
 Route::group(['prefix' => 'vote'], function () {
     Route::post('/create', [VoteController::class, 'create']);
-    Route::get('/validate', [VoteController::class, 'validate']);
+    Route::get('/life-result', [VoteController::class, 'lifeResult']);
+    Route::get('/voting-process', [VoteController::class, 'votingProcess']);
 });
 
 Route::group(['prefix' => 'qr-codes'], function () {
