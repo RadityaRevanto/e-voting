@@ -5,7 +5,7 @@
     Settings2,
     LogOut,
   } from "lucide-react"
-  import { Link } from "@inertiajs/react"
+import { Link, usePage } from "@inertiajs/react"
   import { NavMain } from "@/pages/dashboard/_components/nav-main"
   import { NavUserProfile } from "@/pages/dashboard/_components/nav-user-profile"
   import {
@@ -33,7 +33,9 @@
 
   // Buat komponen AppSidebarPaslon langsung di file ini
   function AppSidebarPaslon({ ...props }: React.ComponentProps<typeof Sidebar>) {
-    const data = {
+  const { url: currentUrl } = usePage();
+
+  const data = {
       user: {
         name: "Aditya Eka",
         email: "aditya@example.com",
@@ -53,6 +55,12 @@
       ],
     };
 
+    // Tandai item aktif berdasarkan URL saat ini
+    const navMain = data.navMain.map((item) => ({
+      ...item,
+      isActive: currentUrl.startsWith(item.url),
+    }));
+
     return (
       <Sidebar 
         collapsible="icon" 
@@ -64,7 +72,7 @@
           <NavUserProfile user={data.user} />
         </SidebarHeader>
         <SidebarContent className="px-2 group-data-[collapsible=icon]:px-1">
-          <NavMain items={data.navMain} />
+          <NavMain items={navMain} />
         </SidebarContent>
         <SidebarFooter className="border-t-0 px-2 pb-4 group-data-[collapsible=icon]:px-1">
           <SidebarMenu>
