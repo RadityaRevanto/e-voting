@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PaslonController;
 use App\Http\Controllers\VoteController;
 use App\Http\Controllers\WargaController;
 use App\Http\Controllers\QRCodeController;
@@ -8,6 +9,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix' => 'admin'], function () {
     Route::post('/register-nik', [WargaController::class, 'registerNik']);
+});
+
+Route::group(['prefix' => 'paslon'], function () {
+    Route::get('{id}/votes', [PaslonController::class, 'getVotes']);
 });
 
 Route::group(['prefix' => 'vote'], function () {
