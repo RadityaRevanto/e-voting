@@ -85,8 +85,22 @@ Route::get('/', function () {
         })->name('admin.settings.term-of');
     });
 
+    // User Dashboard Routes
+Route::prefix('user')->group(function () {
+    // Ganti path Inertia render
+    Route::get('dashboard', function () {
+        return Inertia::render('dashboard/user/dashboard/page'); 
+    })->name('user.dashboard');
 
+    Route::get('vote', function () {
+        return Inertia::render('dashboard/user/vote/page');
+    })->name('user.vote');
+
+    Route::get('voteguideline', function () {
+        return Inertia::render('dashboard/user/voteguideline/page');
+    })->name('user.voteguideline');
+
+});
 
 // });
-
 require __DIR__ . '/settings.php';
