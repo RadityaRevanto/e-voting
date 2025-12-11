@@ -62,7 +62,7 @@ function AppSidebarUser({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <img
             src="/assets/images/user/logo-user.png"
             alt="iVOTE Logo"
-            className="h-12 w-auto transition-all duration-300 group-data-[collapsible=icon]:h-10"
+            className="h-12 w-auto transition-all duration-300 group-data-[collapsible=icon]:hidden"
           />
         </div>
       </SidebarHeader>
