@@ -47,22 +47,22 @@ export default function UserVotePage() {
   return (
     <UserDashboardlayout>
       <div className="bg-white w-full min-h-screen flex flex-col items-center py-16 px-4">
-        <header className="mb-8">
-          <h1 className="[font-family:'Poppins-Bold',Helvetica] font-bold text-[#53589a] text-[38px] tracking-[0] leading-[normal] text-center">
+        <header className="mb-15 -mt-10 w-full">
+          <h1 className="[font-family:'Poppins-Bold',Helvetica] font-bold text-[#53589a] text-[38px] tracking-[0] leading-[normal] text-left">
             YOU MAY NOW CAST YOUR VOTES !
           </h1>
         </header>
 
-        <main className="flex flex-col items-center w-full max-w-7xl">
+        <main className="flex flex-col items-center w-full">
           <section aria-labelledby="election-title" className="mb-12 text-center">
             <h2
               id="election-title"
-              className="[font-family:'Poppins-Bold',Helvetica] font-bold text-[#53589a] text-[32px] tracking-[0] leading-[normal] mb-2"
+              className="[font-family:'Poppins-Bold',Helvetica] font-bold text-[#53589a] text-[36px] tracking-[0] leading-[normal] mb-5"
             >
               Village Head Election
             </h2>
 
-            <p className="[font-family:'Poppins-Medium',Helvetica] font-medium text-[#53599b] text-xl tracking-[0] leading-[normal]">
+            <p className="[font-family:'Poppins-Medium',Helvetica] font-medium text-[#53599b] text-lg tracking-[0] leading-[normal]">
               You Can Only Vote For One Candidates
             </p>
           </section>
@@ -72,39 +72,39 @@ export default function UserVotePage() {
               {candidates.map((candidate) => (
                 <article
                   key={candidate.id}
-                  className={`relative w-[254px] h-[300px] ${
+                  className={`relative w-[380px] h-[450px] ${
                     selectedCandidate === candidate.id
                       ? "border-[3px] border-solid border-[#232f9b] rounded-[20px]"
                       : ""
                   }`}
                   aria-labelledby={`candidate-name-${candidate.id}`}
                 >
-                  <div className="w-[250px] h-[300px] rounded-[20px] bg-[linear-gradient(180deg,rgba(204,211,227,1)_0%,rgba(229,232,240,1)_42%,rgba(255,255,255,1)_100%)] shadow-[0px_4px_4px_#00000040] mx-auto" />
+                  <div className="w-[375px] h-[450px] rounded-[20px] bg-[linear-gradient(180deg,rgba(204,211,227,1)_0%,rgba(229,232,240,1)_42%,rgba(255,255,255,1)_100%)] shadow-[0px_4px_4px_#00000040] mx-auto" />
 
-                  <div className="absolute top-[29px] left-1/2 transform -translate-x-1/2 w-[132px] h-[132px] bg-white rounded-[66px]" />
+                  <div className="absolute top-[44px] left-1/2 transform -translate-x-1/2 w-[200px] h-[200px] bg-white rounded-[100px]" />
 
                   <img
-                    className="absolute top-8 left-1/2 transform -translate-x-1/2 w-[125px] h-[125px] rounded-full object-cover"
+                    className="absolute top-[50px] left-1/2 transform -translate-x-1/2 w-[190px] h-[190px] rounded-full object-cover"
                     alt={`${candidate.name} profile picture`}
                     src={candidate.image}
                   />
 
                   <h3
                     id={`candidate-name-${candidate.id}`}
-                    className="absolute top-[177px] left-1/2 transform -translate-x-1/2 w-[155px] [font-family:'Poppins-Bold',Helvetica] font-bold text-[#53589a] text-xl tracking-[0] leading-[normal] whitespace-nowrap text-center"
+                    className="absolute top-[265px] left-1/2 transform -translate-x-1/2 w-[230px] [font-family:'Poppins-Bold',Helvetica] font-bold text-[#53589a] text-2xl tracking-[0] leading-[normal] whitespace-nowrap text-center"
                   >
                     {candidate.name}
                   </h3>
 
-                  <p className="absolute top-[206px] left-1/2 transform -translate-x-1/2 w-[120px] [font-family:'Poppins-Medium',Helvetica] font-medium text-[#53599b] text-xs tracking-[0] leading-[normal] text-center">
+                  <p className="absolute top-[310px] left-1/2 transform -translate-x-1/2 w-[180px] [font-family:'Poppins-Medium',Helvetica] font-medium text-[#53599b] text-sm tracking-[0] leading-[normal] text-center">
                     {candidate.department}
                   </p>
 
-                  <div className="absolute top-[252px] left-1/2 transform -translate-x-1/2 flex gap-2">
+                  <div className="absolute top-[378px] left-1/2 transform -translate-x-1/2 flex gap-3">
                     <button
                       type="button"
                       onClick={() => handleVote(candidate.id)}
-                      className={`w-[90px] h-[30px] px-[27px] py-[7px] bg-[#232f9b] flex items-center justify-center rounded-[30px] ${
+                      className={`w-[135px] h-[45px] px-[27px] py-[7px] bg-[#232f9b] flex items-center justify-center rounded-[30px] ${
                         selectedCandidate === candidate.id
                           ? "ring-2 ring-white"
                           : ""
@@ -112,17 +112,17 @@ export default function UserVotePage() {
                       aria-pressed={selectedCandidate === candidate.id}
                       aria-label={`Vote for ${candidate.name}`}
                     >
-                      <span className="[font-family:'Poppins-Bold',Helvetica] font-bold text-white text-xs tracking-[0] leading-[normal]">
+                      <span className="[font-family:'Poppins-Bold',Helvetica] font-bold text-white text-sm tracking-[0] leading-[normal]">
                         VOTE
                       </span>
                     </button>
 
                     <button
                       type="button"
-                      className="w-[91px] h-[30px] px-[13px] py-[7px] bg-white border border-solid border-[#232f9b] flex items-center justify-center rounded-[30px]"
+                      className="w-[137px] h-[45px] px-[13px] py-[7px] bg-white border border-solid border-[#232f9b] flex items-center justify-center rounded-[30px]"
                       aria-label={`View details for ${candidate.name}`}
                     >
-                      <span className="[font-family:'Poppins-Bold',Helvetica] font-bold text-[#232f9b] text-[10px] tracking-[0] leading-[normal]">
+                      <span className="[font-family:'Poppins-Bold',Helvetica] font-bold text-[#232f9b] text-xs tracking-[0] leading-[normal]">
                         VIEW DETAIL
                       </span>
                     </button>
