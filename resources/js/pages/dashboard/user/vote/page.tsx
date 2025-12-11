@@ -46,7 +46,7 @@ export default function UserVotePage() {
 
   return (
     <UserDashboardlayout>
-      <div className="bg-white w-full min-h-screen flex flex-col py-16 px-4">
+      <div className="bg-white w-full min-h-screen flex flex-col items-center py-16 px-4">
         <header className="mb-8">
           <h1 className="[font-family:'Poppins-Bold',Helvetica] font-bold text-[#53589a] text-[38px] tracking-[0] leading-[normal] text-center">
             YOU MAY NOW CAST YOUR VOTES !
