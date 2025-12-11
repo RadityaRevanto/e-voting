@@ -1,158 +1,314 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import UserDashboardlayout from "../../_components/userlayout";
+import { QRScannerDialog } from "./_components/qr-scanner-dialog";
+import { VoteHeader } from "./_components/vote-header";
+import { ElectionTitle } from "./_components/election-title";
+import { CandidatesList } from "./_components/candidates-list";
+import { Candidate } from "./_components/candidate-card";
+import { SubmitVoteButton } from "./_components/submit-vote-button";
 
-interface Candidate {
-  id: number;
-  name: string;
-  department: string;
-  image: string;
-}
+const QR_CODE_REGION_ID = "qr-reader";
+
+const candidates: Candidate[] = [
+  {
+    id: 1,
+    name: "Raditya Gavra",
+    department: "System Information",
+    image: "/assets/images/user/imges.jpg",
+  },
+  {
+    id: 2,
+    name: "Raditya Gavra",
+    department: "System Information",
+    image: "/assets/images/user/imges.jpg",
+  },
+  {
+    id: 3,
+    name: "Raditya Gavra",
+    department: "System Information",
+    image: "/assets/images/user/imges.jpg",
+  },
+];
 
 export default function UserVotePage() {
   const [selectedCandidate, setSelectedCandidate] = useState<number | null>(
     null
   );
+  const [isQrScanned, setIsQrScanned] = useState<boolean>(false);
+  const [showQrScanner, setShowQrScanner] = useState<boolean>(true);
+  const [scannedData, setScannedData] = useState<string | null>(null);
+  const [scannerError, setScannerError] = useState<string | null>(null);
+  const [isScanning, setIsScanning] = useState<boolean>(false);
+  const scannerRef = useRef<any>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const candidates: Candidate[] = [
-    {
-      id: 1,
-      name: "Raditya Gavra",
-      department: "System Information",
-      image: "/assets/images/user/imges.jpg",
-    },
-    {
-      id: 2,
-      name: "Raditya Gavra",
-      department: "System Information",
-      image: "/assets/images/user/imges.jpg",
-    },
-    {
-      id: 3,
-      name: "Raditya Gavra",
-      department: "System Information",
-      image: "/assets/images/user/imges.jpg",
-    },
-  ];
+  const stopScanning = useCallback(async () => {
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop();
+        await scannerRef.current.clear();
+        setIsScanning(false);
+        scannerRef.current = null;
+        
+        // Clear element content
+        const element = document.getElementById(QR_CODE_REGION_ID);
+        if (element) {
+          element.innerHTML = "";
+        }
+      } catch (error) {
+        console.error("Error stopping scanner:", error);
+        setIsScanning(false);
+        scannerRef.current = null;
+        
+        // Clear element content even on error
+        const element = document.getElementById(QR_CODE_REGION_ID);
+        if (element) {
+          element.innerHTML = "";
+        }
+      }
+    }
+  }, []);
+
+  const onScanSuccess = useCallback((decodedText: string) => {
+    if (decodedText && decodedText.length > 0) {
+      setScannedData(decodedText);
+      setIsQrScanned(true);
+      setShowQrScanner(false);
+      setIsScanning(false);
+      
+      // Stop scanner setelah berhasil scan
+      if (scannerRef.current) {
+        scannerRef.current.stop().then(() => {
+          scannerRef.current?.clear();
+          scannerRef.current = null;
+          
+          // Clear element content
+          const element = document.getElementById(QR_CODE_REGION_ID);
+          if (element) {
+            element.innerHTML = "";
+          }
+        }).catch((error: any) => {
+          console.error("Error stopping scanner:", error);
+          scannerRef.current = null;
+          
+          // Clear element content even on error
+          const element = document.getElementById(QR_CODE_REGION_ID);
+          if (element) {
+            element.innerHTML = "";
+          }
+        });
+      }
+    }
+  }, []);
+
+  const onScanFailure = useCallback((error: string) => {
+    console.log("Scan failed:", error);
+  }, []);
+
+  const startCameraScanning = useCallback(async () => {
+    try {
+      setScannerError(null);
+      const html5QrcodeModule = await import("html5-qrcode");
+      const Html5Qrcode = html5QrcodeModule.Html5Qrcode;
+
+      const element = document.getElementById(QR_CODE_REGION_ID);
+      if (!element) {
+        setScannerError("Element scanner tidak ditemukan.");
+        return;
+      }
+
+      // Stop scanner yang sudah ada jika ada
+      if (scannerRef.current) {
+        await stopScanning();
+      }
+
+      // Set state scanning terlebih dahulu untuk menghilangkan placeholder
+      setIsScanning(true);
+
+      // Clear element content sebelum memulai scanner baru
+      element.innerHTML = "";
+      
+      // Set styling untuk memastikan elemen terlihat dan tidak menyebabkan layout shift
+      element.style.width = "100%";
+      element.style.height = "500px";
+      element.style.minHeight = "500px";
+      element.style.position = "relative";
+      element.style.overflow = "hidden";
+
+      // Tunggu sedikit untuk memastikan DOM sudah update
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Inisialisasi QR Scanner baru
+      scannerRef.current = new Html5Qrcode(QR_CODE_REGION_ID);
+
+      // Dapatkan ukuran container untuk qrbox yang responsif
+      const containerWidth = element.clientWidth || 300;
+      const containerHeight = element.clientHeight || 300;
+      const qrboxSize = Math.min(Math.min(containerWidth, containerHeight) - 40, 500);
+
+      // Mulai scanning dengan kamera
+      await scannerRef.current.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: qrboxSize, height: qrboxSize },
+          aspectRatio: 1.0,
+          rememberLastUsedCamera: true,
+        },
+        onScanSuccess,
+        onScanFailure
+      );
+    } catch (error: any) {
+      console.error("Error starting camera scanner:", error);
+      setScannerError(
+        error.message || "Gagal memulai scanner. Pastikan kamera tersedia dan izin diberikan."
+      );
+      setIsScanning(false);
+      scannerRef.current = null;
+      
+      // Clear element content on error
+      const element = document.getElementById(QR_CODE_REGION_ID);
+      if (element) {
+        element.innerHTML = "";
+      }
+    }
+  }, [onScanSuccess, onScanFailure, stopScanning]);
+
+  const handleScanImageFile = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setScannerError(null);
+      const html5QrcodeModule = await import("html5-qrcode");
+      const Html5Qrcode = html5QrcodeModule.Html5Qrcode;
+
+      const html5Qrcode = new Html5Qrcode(QR_CODE_REGION_ID);
+      
+      const decodedText = await html5Qrcode.scanFile(file, false);
+      
+      if (decodedText && decodedText.length > 0) {
+        setScannedData(decodedText);
+        setIsQrScanned(true);
+        setShowQrScanner(false);
+        setIsScanning(false);
+      }
+    } catch (error: any) {
+      console.error("Error scanning image file:", error);
+      setScannerError(
+        error.message || "Gagal memindai QR code dari gambar. Pastikan file berisi QR code yang valid."
+      );
+    } finally {
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    // Cleanup scanner saat component unmount atau modal ditutup
+    return () => {
+      if (scannerRef.current && isScanning) {
+        stopScanning();
+      }
+    };
+  }, [showQrScanner, isScanning, stopScanning]);
+
+  useEffect(() => {
+    // Tambahkan CSS khusus untuk elemen video yang dibuat oleh html5-qrcode
+    if (isScanning) {
+      const element = document.getElementById(QR_CODE_REGION_ID);
+      if (element) {
+        // Pastikan container memiliki height tetap
+        element.style.height = '500px';
+        element.style.minHeight = '500px';
+        element.style.overflow = 'hidden';
+        
+        // Tunggu sedikit untuk memastikan elemen video sudah dibuat
+        const timer = setTimeout(() => {
+          const video = element.querySelector('video');
+          const canvas = element.querySelector('canvas');
+          const html5QrcodeContainer = element.querySelector('#html5-qrcode-container');
+          
+          if (html5QrcodeContainer) {
+            (html5QrcodeContainer as HTMLElement).style.height = '100%';
+            (html5QrcodeContainer as HTMLElement).style.overflow = 'hidden';
+          }
+          
+          if (video) {
+            video.style.width = '100%';
+            video.style.height = '100%';
+            video.style.display = 'block';
+            video.style.objectFit = 'cover';
+            video.style.maxHeight = '500px';
+          }
+          
+          if (canvas) {
+            canvas.style.display = 'block';
+            canvas.style.maxHeight = '500px';
+          }
+        }, 300);
+
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isScanning]);
 
   const handleVote = (candidateId: number) => {
     setSelectedCandidate(candidateId);
   };
 
   const handleSubmit = () => {
-    if (selectedCandidate !== null) {
+    if (selectedCandidate !== null && isQrScanned) {
       console.log(`Vote submitted for candidate ${selectedCandidate}`);
+      console.log(`QR Code data: ${scannedData}`);
     }
+  };
+
+  const handleOpenScanner = () => {
+    setShowQrScanner(true);
   };
 
   return (
     <UserDashboardlayout>
       <div className="bg-white w-full min-h-screen flex flex-col items-center py-16 px-4">
-        <header className="mb-15 -mt-10 w-full">
-          <h1 className="[font-family:'Poppins-Bold',Helvetica] font-bold text-[#53589a] text-[38px] tracking-[0] leading-[normal] text-left">
-            YOU MAY NOW CAST YOUR VOTES !
-          </h1>
-        </header>
+        <QRScannerDialog
+          open={showQrScanner && !isQrScanned}
+          onOpenChange={(open) => {
+            if (!open && !isQrScanned) {
+              return;
+            }
+            setShowQrScanner(open);
+          }}
+          scannerError={scannerError}
+          isScanning={isScanning}
+          startCameraScanning={startCameraScanning}
+          stopScanning={stopScanning}
+          handleScanImageFile={handleScanImageFile}
+          fileInputRef={fileInputRef}
+          qrCodeRegionId={QR_CODE_REGION_ID}
+          setShowQrScanner={setShowQrScanner}
+          isQrScanned={isQrScanned}
+        />
+
+        <VoteHeader isQrScanned={isQrScanned} />
 
         <main className="flex flex-col items-center w-full">
-          <section aria-labelledby="election-title" className="mb-12 text-center">
-            <h2
-              id="election-title"
-              className="[font-family:'Poppins-Bold',Helvetica] font-bold text-[#53589a] text-[36px] tracking-[0] leading-[normal] mb-5"
-            >
-              Village Head Election
-            </h2>
+          <ElectionTitle />
 
-            <p className="[font-family:'Poppins-Medium',Helvetica] font-medium text-[#53599b] text-lg tracking-[0] leading-[normal]">
-              You Can Only Vote For One Candidates
-            </p>
-          </section>
+          <CandidatesList
+            candidates={candidates}
+            selectedCandidate={selectedCandidate}
+            isQrScanned={isQrScanned}
+            onVote={handleVote}
+            onOpenScanner={handleOpenScanner}
+          />
 
-          <section aria-label="Candidates" className="mb-16">
-            <div className="flex flex-wrap justify-center gap-8">
-              {candidates.map((candidate) => (
-                <article
-                  key={candidate.id}
-                  className={`relative w-[380px] h-[450px] ${
-                    selectedCandidate === candidate.id
-                      ? "border-[3px] border-solid border-[#232f9b] rounded-[20px]"
-                      : ""
-                  }`}
-                  aria-labelledby={`candidate-name-${candidate.id}`}
-                >
-                  <div className="w-[375px] h-[450px] rounded-[20px] bg-[linear-gradient(180deg,rgba(204,211,227,1)_0%,rgba(229,232,240,1)_42%,rgba(255,255,255,1)_100%)] shadow-[0px_4px_4px_#00000040] mx-auto" />
-
-                  <div className="absolute top-[44px] left-1/2 transform -translate-x-1/2 w-[200px] h-[200px] bg-white rounded-[100px]" />
-
-                  <img
-                    className="absolute top-[50px] left-1/2 transform -translate-x-1/2 w-[190px] h-[190px] rounded-full object-cover"
-                    alt={`${candidate.name} profile picture`}
-                    src={candidate.image}
-                  />
-
-                  <h3
-                    id={`candidate-name-${candidate.id}`}
-                    className="absolute top-[265px] left-1/2 transform -translate-x-1/2 w-[230px] [font-family:'Poppins-Bold',Helvetica] font-bold text-[#53589a] text-2xl tracking-[0] leading-[normal] whitespace-nowrap text-center"
-                  >
-                    {candidate.name}
-                  </h3>
-
-                  <p className="absolute top-[310px] left-1/2 transform -translate-x-1/2 w-[180px] [font-family:'Poppins-Medium',Helvetica] font-medium text-[#53599b] text-sm tracking-[0] leading-[normal] text-center">
-                    {candidate.department}
-                  </p>
-
-                  <div className="absolute top-[378px] left-1/2 transform -translate-x-1/2 flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => handleVote(candidate.id)}
-                      className={`w-[135px] h-[45px] px-[27px] py-[7px] bg-[#232f9b] flex items-center justify-center rounded-[30px] ${
-                        selectedCandidate === candidate.id
-                          ? "ring-2 ring-white"
-                          : ""
-                      }`}
-                      aria-pressed={selectedCandidate === candidate.id}
-                      aria-label={`Vote for ${candidate.name}`}
-                    >
-                      <span className="[font-family:'Poppins-Bold',Helvetica] font-bold text-white text-sm tracking-[0] leading-[normal]">
-                        VOTE
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="w-[137px] h-[45px] px-[13px] py-[7px] bg-white border border-solid border-[#232f9b] flex items-center justify-center rounded-[30px]"
-                      aria-label={`View details for ${candidate.name}`}
-                    >
-                      <span className="[font-family:'Poppins-Bold',Helvetica] font-bold text-[#232f9b] text-xs tracking-[0] leading-[normal]">
-                        VIEW DETAIL
-                      </span>
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section aria-live="polite" aria-atomic="true" className="mb-4">
-            <p className="[font-family:'Poppins-Regular',Helvetica] font-normal text-[#eb3723] text-sm tracking-[0] leading-[normal] text-center">
-              Double Check Your Vote Before Submited
-            </p>
-          </section>
-
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={selectedCandidate === null}
-            className={`w-[230px] h-[45px] bg-[#232f9b] rounded-[30px] border-2 border-solid border-white shadow-[0px_4px_4px_#00000040] flex items-center justify-center ${
-              selectedCandidate === null
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-[#1a2470] transition-colors"
-            }`}
-            aria-label="Submit your vote"
-          >
-            <span className="[font-family:'Poppins-Bold',Helvetica] font-bold text-white text-base tracking-[0] leading-[normal]">
-              SUBMIT VOTE
-            </span>
-          </button>
+          <SubmitVoteButton
+            disabled={selectedCandidate === null || !isQrScanned}
+            onSubmit={handleSubmit}
+          />
         </main>
       </div>
     </UserDashboardlayout>
