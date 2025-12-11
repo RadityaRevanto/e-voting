@@ -1,10 +1,6 @@
 import { ReactNode } from "react";
 import * as React from "react"
-import {
-  Home,
-  Settings2,
-  LogOut,
-} from "lucide-react"
+import { CheckSquare, FileText, LogOut } from "lucide-react"
 import { Link } from "@inertiajs/react"
 import { NavMain } from "@/pages/dashboard/_components/nav-main"
 import {
@@ -36,14 +32,14 @@ function AppSidebarUser({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const data = {
     navMain: [
       {
-        title: "Dashboard",
-        url: "/user/dashboard",
-        icon: Home,
+        title: "Vote",
+        url: "/user/vote",
+        icon: CheckSquare,
       },
       {
-        title: "Settings",
-        url: "/user/settings",
-        icon: Settings2,
+        title: "Vote Guideline",
+        url: "/user/voteguideline",
+        icon: FileText,
       },
     ],
   };
@@ -62,19 +58,14 @@ function AppSidebarUser({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       {/* ⬅ LOGO ganti NavUserProfile tapi spacingnya sama */}
       <SidebarHeader className="border-b-0 px-4 py-8">
-  <div className="flex w-full items-center justify-center">
-    <div 
-      className="
-        font-extrabold text-[#53599b]
-        text-3xl 
-        transition-all duration-300
-        group-data-[collapsible=icon]:text-xl
-      "
-    >
-      iVOTE
-    </div>
-  </div>
-</SidebarHeader>
+        <div className="flex w-full items-center justify-center">
+          <img
+            src="/assets/images/user/logo-user.png"
+            alt="iVOTE Logo"
+            className="h-12 w-auto transition-all duration-300 group-data-[collapsible=icon]:h-10"
+          />
+        </div>
+      </SidebarHeader>
 
 
       {/* MENU — tetap pakai NavMain */}

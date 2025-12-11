@@ -88,10 +88,6 @@ Route::get('/', function () {
     // User Dashboard Routes
 Route::prefix('user')->group(function () {
     // Ganti path Inertia render
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard/user/dashboard/page'); 
-    })->name('user.dashboard');
-
     Route::get('vote', function () {
         return Inertia::render('dashboard/user/vote/page');
     })->name('user.vote');
