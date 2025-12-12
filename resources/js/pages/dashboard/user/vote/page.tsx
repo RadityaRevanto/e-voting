@@ -259,10 +259,54 @@ export default function UserVotePage() {
     setSelectedCandidate(candidateId);
   };
 
-  const handleSubmit = () => {
-    if (selectedCandidate !== null && isQrScanned) {
-      console.log(`Vote submitted for candidate ${selectedCandidate}`);
-      console.log(`QR Code data: ${scannedData}`);
+  const handleSubmit = async () => {
+    if (selectedCandidate === null || !isQrScanned) {
+      return;
+    }
+
+    const selectedCandidateData = candidates.find(c => c.id === selectedCandidate);
+    if (!selectedCandidateData) {
+      console.error('Candidate tidak ditemukan');
+      return;
+    }
+
+    try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+      
+      const response = await fetch("/api/votes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": csrfToken,
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({
+          candidate_id: selectedCandidateData.id,
+          candidate_name: selectedCandidateData.name,
+          candidate_department: selectedCandidateData.department,
+          qr_code_data: scannedData,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error submitting vote:", errorData);
+        alert("Gagal mengirim vote. Silakan coba lagi.");
+        return;
+      }
+
+      const result = await response.json();
+      console.log("Vote berhasil dikirim:", result);
+      alert("Vote Anda berhasil dikirim!");
+      
+      // Reset form setelah berhasil
+      setSelectedCandidate(null);
+      setIsQrScanned(false);
+      setScannedData(null);
+      setShowQrScanner(false);
+    } catch (error) {
+      console.error("Error submitting vote:", error);
+      alert("Terjadi kesalahan saat mengirim vote. Silakan coba lagi.");
     }
   };
 

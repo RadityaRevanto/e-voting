@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
+use App\Http\Controllers\Api\VoteLogController;
 
 Route::get('/', function () {
     return Inertia::render('welcome', [
@@ -31,6 +32,10 @@ Route::get('/', function () {
         Route::get('dashboard', function () {
             return Inertia::render('dashboard/admin/dashboard/page');
         })->name('admin.dashboard');
+
+        Route::get('dashboard/view', function () {
+            return Inertia::render('dashboard/admin/dashboard/view/page');
+        })->name('admin.dashboard.view');
 
         Route::get('voteguideline', function () {
             return Inertia::render('dashboard/admin/voteguideline/page');
@@ -96,6 +101,13 @@ Route::prefix('user')->group(function () {
         return Inertia::render('dashboard/user/voteguideline/page');
     })->name('user.voteguideline');
 
+});
+
+// API Routes
+Route::prefix('api')->middleware(['auth'])->group(function () {
+    Route::post('votes', [VoteLogController::class, 'store'])->name('api.votes.store');
+    Route::get('vote-logs', [VoteLogController::class, 'index'])->name('api.vote-logs.index');
+    Route::get('vote-statistics', [VoteLogController::class, 'statistics'])->name('api.vote-statistics');
 });
 
 // });

@@ -1,12 +1,11 @@
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { router } from "@inertiajs/react";
 
 export const OngoingElectionSection: React.FC = () => {
   const handleVoteClick = (): void => {
-    // TODO: ganti dengan navigasi atau aksi vote nyata
-    // eslint-disable-next-line no-console
-    console.log("Vote Now clicked");
+    router.visit("/admin/dashboard/view");
   };
 
   return (
