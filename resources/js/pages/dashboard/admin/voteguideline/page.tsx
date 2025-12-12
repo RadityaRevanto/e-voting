@@ -1,33 +1,92 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AdminDashboardlayout from "../../_components/adminlayout";
 import { GripVertical } from "lucide-react";
 
-export default function AdminVoteGuidelinePage() {
-    const [guidelines, setGuidelines] = useState([
-        { id: 1, text: "LOREM IPSUM DOLOR LOREM IPSUM DOLOR LOREM IPSUM DOLOR" },
-        { id: 2, text: "LOREM IPSUM DOLOR LOREM IPSUM DOLOR LOREM IPSUM DOLOR" },
-        { id: 3, text: "LOREM IPSUM DOLOR LOREM IPSUM DOLOR LOREM IPSUM DOLOR" },
-        { id: 4, text: "LOREM IPSUM DOLOR LOREM IPSUM DOLOR LOREM IPSUM DOLOR" },
-        { id: 5, text: "LOREM IPSUM DOLOR LOREM IPSUM DOLOR LOREM IPSUM DOLOR" },
-        { id: 6, text: "LOREM IPSUM DOLOR LOREM IPSUM DOLOR LOREM IPSUM DOLOR" },
-        { id: 7, text: "LOREM IPSUM DOLOR LOREM IPSUM DOLOR LOREM IPSUM DOLOR" },
-        { id: 8, text: "LOREM IPSUM DOLOR LOREM IPSUM DOLOR LOREM IPSUM DOLOR" },
-        { id: 9, text: "LOREM IPSUM DOLOR LOREM IPSUM DOLOR LOREM IPSUM DOLOR" },
-    ]);
+interface Guideline {
+    id: number;
+    text: string;
+}
 
+export default function AdminVoteGuidelinePage() {
+    const [guidelines, setGuidelines] = useState<Guideline[]>([]);
+    const [loading, setLoading] = useState(true);
     const [newGuideline, setNewGuideline] = useState("");
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editingText, setEditingText] = useState("");
     const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
     const [draggedId, setDraggedId] = useState<number | null>(null);
     const [dragOverId, setDragOverId] = useState<number | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [processing, setProcessing] = useState(false);
 
-    const handleAddGuideline = (e: React.FormEvent) => {
+    const fetchGuidelines = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await fetch("/api/vote-guidelines/", {
+                headers: {
+                    "Accept": "application/json",
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error("Gagal memuat guidelines");
+            }
+
+            const data = await response.json();
+            if (data.success && data.data) {
+                setGuidelines(data.data);
+            } else {
+                throw new Error("Format data tidak valid");
+            }
+        } catch (err) {
+            console.error("Error fetching guidelines:", err);
+            setError(err instanceof Error ? err.message : "Terjadi kesalahan saat memuat guidelines");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchGuidelines();
+    }, []);
+
+    const handleAddGuideline = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (newGuideline.trim()) {
-            const newId = guidelines.length > 0 ? Math.max(...guidelines.map(g => g.id)) + 1 : 1;
-            setGuidelines([...guidelines, { id: newId, text: newGuideline.trim() }]);
-            setNewGuideline("");
+        if (!newGuideline.trim() || processing) return;
+
+        setProcessing(true);
+        setError(null);
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+            
+            const response = await fetch("/api/vote-guidelines/create", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": csrfToken,
+                    "Accept": "application/json",
+                },
+                body: JSON.stringify({
+                    text: newGuideline.trim(),
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Gagal menambahkan guideline");
+            }
+
+            if (data.success) {
+                setNewGuideline("");
+                await fetchGuidelines();
+            }
+        } catch (err) {
+            console.error("Error adding guideline:", err);
+            setError(err instanceof Error ? err.message : "Terjadi kesalahan saat menambahkan guideline");
+        } finally {
+            setProcessing(false);
         }
     };
 
@@ -36,14 +95,43 @@ export default function AdminVoteGuidelinePage() {
         setEditingText(text);
     };
 
-    const handleUpdateGuideline = (id: number, e: React.FormEvent) => {
+    const handleUpdateGuideline = async (id: number, e: React.FormEvent) => {
         e.preventDefault();
-        if (editingText.trim()) {
-            setGuidelines(guidelines.map(guideline =>
-                guideline.id === id ? { ...guideline, text: editingText.trim() } : guideline
-            ));
-            setEditingId(null);
-            setEditingText("");
+        if (!editingText.trim() || processing) return;
+
+        setProcessing(true);
+        setError(null);
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+            
+            const response = await fetch(`/api/vote-guidelines/${id}/update`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": csrfToken,
+                    "Accept": "application/json",
+                },
+                body: JSON.stringify({
+                    text: editingText.trim(),
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Gagal mengupdate guideline");
+            }
+
+            if (data.success) {
+                setEditingId(null);
+                setEditingText("");
+                await fetchGuidelines();
+            }
+        } catch (err) {
+            console.error("Error updating guideline:", err);
+            setError(err instanceof Error ? err.message : "Terjadi kesalahan saat mengupdate guideline");
+        } finally {
+            setProcessing(false);
         }
     };
 
@@ -56,10 +144,37 @@ export default function AdminVoteGuidelinePage() {
         setDeleteConfirmId(id);
     };
 
-    const confirmDelete = () => {
-        if (deleteConfirmId !== null) {
-            setGuidelines(guidelines.filter(guideline => guideline.id !== deleteConfirmId));
-            setDeleteConfirmId(null);
+    const confirmDelete = async () => {
+        if (deleteConfirmId === null || processing) return;
+
+        setProcessing(true);
+        setError(null);
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+            
+            const response = await fetch(`/api/vote-guidelines/${deleteConfirmId}/delete`, {
+                method: "DELETE",
+                headers: {
+                    "X-CSRF-TOKEN": csrfToken,
+                    "Accept": "application/json",
+                },
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Gagal menghapus guideline");
+            }
+
+            if (data.success) {
+                setDeleteConfirmId(null);
+                await fetchGuidelines();
+            }
+        } catch (err) {
+            console.error("Error deleting guideline:", err);
+            setError(err instanceof Error ? err.message : "Terjadi kesalahan saat menghapus guideline");
+        } finally {
+            setProcessing(false);
         }
     };
 
@@ -128,6 +243,12 @@ export default function AdminVoteGuidelinePage() {
                     </header>
 
                     <main>
+                        {error && (
+                            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                <p className="text-red-700 text-sm sm:text-base">{error}</p>
+                            </div>
+                        )}
+
                         <div className="mb-6 sm:mb-8 p-4 sm:p-5 md:p-6 bg-gray-50 rounded-lg border border-gray-200">
                             <h2 className="font-semibold text-[#53589a] text-base sm:text-lg md:text-xl mb-3 sm:mb-4">
                                 Tambah Guideline Baru
@@ -138,19 +259,26 @@ export default function AdminVoteGuidelinePage() {
                                     value={newGuideline}
                                     onChange={(e) => setNewGuideline(e.target.value)}
                                     placeholder="Masukkan guideline baru..."
-                                    className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53599b] focus:border-transparent text-sm sm:text-base md:text-lg"
+                                    disabled={processing}
+                                    className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53599b] focus:border-transparent text-sm sm:text-base md:text-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 />
                                 <button
                                     type="submit"
-                                    className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-[#53599b] text-white font-semibold rounded-lg hover:bg-[#434a7a] transition-colors duration-200 text-sm sm:text-base"
+                                    disabled={processing || !newGuideline.trim()}
+                                    className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-[#53599b] text-white font-semibold rounded-lg hover:bg-[#434a7a] transition-colors duration-200 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Tambah
+                                    {processing ? "Memproses..." : "Tambah"}
                                 </button>
                             </form>
                         </div>
 
-                        <ol className="list-none space-y-4 sm:space-y-5 md:space-y-6" role="list" aria-label="Voters Guidelines">
-                            {guidelines.map((guideline, index) => (
+                        {loading ? (
+                            <div className="text-center py-8 sm:py-10 md:py-12 text-gray-500 text-sm sm:text-base md:text-lg">
+                                Memuat guidelines...
+                            </div>
+                        ) : (
+                            <ol className="list-none space-y-4 sm:space-y-5 md:space-y-6" role="list" aria-label="Voters Guidelines">
+                                {guidelines.map((guideline, index) => (
                                 <li
                                     key={guideline.id}
                                     draggable={editingId !== guideline.id}
@@ -191,12 +319,13 @@ export default function AdminVoteGuidelinePage() {
                                                     autoFocus
                                                 />
                                                 <div className="flex gap-2">
-                                                    <button
-                                                        type="submit"
-                                                        className="px-3 sm:px-4 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors duration-200 text-sm sm:text-base"
-                                                    >
-                                                        Simpan
-                                                    </button>
+                                                <button
+                                                    type="submit"
+                                                    disabled={processing}
+                                                    className="px-3 sm:px-4 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors duration-200 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    {processing ? "Menyimpan..." : "Simpan"}
+                                                </button>
                                                     <button
                                                         type="button"
                                                         onClick={handleCancelEdit}
@@ -246,10 +375,11 @@ export default function AdminVoteGuidelinePage() {
                                         </>
                                     )}
                                 </li>
-                            ))}
-                        </ol>
+                                ))}
+                            </ol>
+                        )}
 
-                        {guidelines.length === 0 && (
+                        {!loading && guidelines.length === 0 && (
                             <div className="text-center py-8 sm:py-10 md:py-12 text-gray-500 text-sm sm:text-base md:text-lg">
                                 Belum ada guideline. Silakan tambahkan guideline baru.
                             </div>
@@ -277,9 +407,10 @@ export default function AdminVoteGuidelinePage() {
                             </button>
                             <button
                                 onClick={confirmDelete}
-                                className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors duration-200 text-sm sm:text-base"
+                                disabled={processing}
+                                className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors duration-200 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Hapus
+                                {processing ? "Menghapus..." : "Hapus"}
                             </button>
                         </div>
                     </div>
