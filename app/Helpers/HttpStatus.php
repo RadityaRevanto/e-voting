@@ -35,4 +35,12 @@ class HttpStatus
             'data' => [],
         ], 422);
     }
+    
+    public static function code500 (String $message = "Something Wrong"){
+        return response()->json([
+            'success' => false,
+            'message' => $message,
+            'data' => [],
+        ], 500);
+    }
 }
