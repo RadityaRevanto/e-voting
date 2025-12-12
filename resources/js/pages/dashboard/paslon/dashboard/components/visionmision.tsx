@@ -1,5 +1,6 @@
 import React from "react";
 import { Briefcase, Pencil, UserRound } from "lucide-react";
+import { Link } from "@inertiajs/react";
 
 export const VisionMissionSection = () => {
   const candidateData = {
@@ -84,14 +85,15 @@ export const VisionMissionSection = () => {
       </div>
 
       <div className="flex justify-center mt-4 md:mt-5">
-        <button
+        <Link
+          href="/paslon/dashboard/change"
           className="bg-[#dbdefc] hover:bg-[#c9cdfc] transition-colors rounded-full px-8 md:px-[35px] py-2 md:py-[3px] min-w-[120px] md:min-w-[135px] flex items-center gap-2"
           aria-label="Change candidate information"
         >
           <span className="text-[#3544e7] text-base md:text-lg font-bold">
             Change
           </span>
-        </button>
+        </Link>
       </div>
     </section>
   );

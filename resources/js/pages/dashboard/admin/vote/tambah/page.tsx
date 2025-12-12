@@ -4,8 +4,12 @@ import AdminDashboardlayout from "../../../_components/adminlayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import InputError from "@/pages/dashboard/_components/input-error";
 import { Head } from "@inertiajs/react";
+import { AlertCircle } from "lucide-react";
 
 interface Candidate {
     id: number;
@@ -147,17 +151,28 @@ export default function TambahPaslonPage() {
                                 </Button>
                             </Link>
                         </div>
-                        <div className="w-full sm:w-3/4 md:w-1/2 h-0.5 sm:h-1 bg-[#030303]" />
+                        <Separator className="w-full sm:w-3/4 md:w-1/2 bg-[#030303]" />
                     </header>
 
                     <main>
+                        {Object.keys(errors).length > 0 && (
+                            <Alert variant="destructive" className="mb-4">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertDescription>
+                                    Terdapat kesalahan dalam pengisian form. Silakan periksa kembali.
+                                </AlertDescription>
+                            </Alert>
+                        )}
                         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
                                 {/* Card 1: Informasi Paslon */}
-                                <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
-                                    <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#53589a] mb-3 sm:mb-4">
-                                        Informasi Paslon
-                                    </h3>
+                                <Card className="shadow-md">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-[#53589a]">
+                                            Informasi Paslon
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4 sm:space-y-6">
 
                                     <div className="space-y-2">
                                         <Label htmlFor="name" className="text-base sm:text-lg md:text-xl font-semibold text-[#53589a]">
@@ -235,15 +250,17 @@ export default function TambahPaslonPage() {
                                         )}
                                         <InputError message={errors.image} />
                                     </div>
-                                </div>
+                                    </CardContent>
+                                </Card>
 
                                 {/* Card 2: Informasi Akun Paslon */}
-                                <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
-                                    <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#53589a] mb-3 sm:mb-4">
-                                        Informasi Akun Paslon
-                                    </h3>
-
-                                    <div className="space-y-4 sm:space-y-6">
+                                <Card className="shadow-md">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-[#53589a]">
+                                            Informasi Akun Paslon
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4 sm:space-y-6">
                                         <div className="space-y-2">
                                             <Label htmlFor="username" className="text-base sm:text-lg md:text-xl font-semibold text-[#53589a]">
                                                 Username
@@ -297,8 +314,8 @@ export default function TambahPaslonPage() {
                                                 Password minimal 8 karakter
                                             </p>
                                         </div>
-                                    </div>
-                                </div>
+                                    </CardContent>
+                                </Card>
                             </div>
 
                             {/* Tombol Submit dan Batal */}
