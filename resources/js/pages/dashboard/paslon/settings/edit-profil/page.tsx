@@ -1,15 +1,19 @@
-import AdminDashboardlayout from "../../../_components/adminlayout";
+import PaslonLayout from "../../../_components/paslonlayout";
 import { useState, FormEvent, useRef, ChangeEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import InputError from "@/pages/dashboard/_components/input-error";
 
-export default function AdminEditProfilPage() {
+export default function PaslonEditProfilPage() {
     const [nama, setNama] = useState("");
+    const [umur, setUmur] = useState("");
+    const [jurusan, setJurusan] = useState("");
     const [fotoProfil, setFotoProfil] = useState<File | null>(null);
     const [previewFoto, setPreviewFoto] = useState<string | null>(null);
     const [errors, setErrors] = useState<{
         nama?: string;
+        umur?: string;
+        jurusan?: string;
         foto_profil?: string;
         message?: string;
     }>({});
@@ -63,9 +67,19 @@ export default function AdminEditProfilPage() {
         setProcessing(true);
 
         // Validasi client-side
-        if (!nama.trim()) {
+        if (!nama || !umur || !jurusan) {
             setErrors({
-                nama: "Nama harus diisi",
+                message: "Semua field harus diisi",
+            });
+            setProcessing(false);
+            return;
+        }
+
+        // Validasi umur
+        const umurNum = parseInt(umur);
+        if (isNaN(umurNum) || umurNum < 1 || umurNum > 100) {
+            setErrors({
+                umur: "Umur harus berupa angka antara 1-100",
             });
             setProcessing(false);
             return;
@@ -80,6 +94,8 @@ export default function AdminEditProfilPage() {
             if (fotoProfil) {
                 const formData = new FormData();
                 formData.append("nama", nama);
+                formData.append("umur", umur);
+                formData.append("jurusan", jurusan);
                 formData.append("foto_profil", fotoProfil);
 
                 const response = await fetch("/settings/profile", {
@@ -114,6 +130,8 @@ export default function AdminEditProfilPage() {
                     },
                     body: JSON.stringify({
                         nama,
+                        umur,
+                        jurusan,
                     }),
                 });
 
@@ -150,7 +168,7 @@ export default function AdminEditProfilPage() {
     };
 
     return (
-        <AdminDashboardlayout>
+        <PaslonLayout>
             <div className="bg-white w-full min-h-screen p-6">
                 <div className="w-full">
                     <header className="flex flex-col gap-4 mb-8">
@@ -243,6 +261,53 @@ export default function AdminEditProfilPage() {
                             <InputError message={errors.nama} />
                         </div>
 
+                        {/* Umur */}
+                        <div className="space-y-2">
+                            <label
+                                htmlFor="umur"
+                                className="block text-sm font-medium text-gray-700"
+                            >
+                                Umur
+                            </label>
+                            <Input
+                                id="umur"
+                                type="number"
+                                value={umur}
+                                onChange={(e) => setUmur(e.target.value)}
+                                className="w-full"
+                                disabled={processing}
+                                placeholder="Masukkan umur"
+                                min="1"
+                                max="100"
+                                aria-invalid={errors.umur ? "true" : "false"}
+                            />
+                            <InputError message={errors.umur} />
+                            <p className="text-xs text-gray-500">
+                                Umur harus antara 1-100 tahun
+                            </p>
+                        </div>
+
+                        {/* Jurusan */}
+                        <div className="space-y-2">
+                            <label
+                                htmlFor="jurusan"
+                                className="block text-sm font-medium text-gray-700"
+                            >
+                                Jurusan
+                            </label>
+                            <Input
+                                id="jurusan"
+                                type="text"
+                                value={jurusan}
+                                onChange={(e) => setJurusan(e.target.value)}
+                                className="w-full"
+                                disabled={processing}
+                                placeholder="Masukkan jurusan"
+                                aria-invalid={errors.jurusan ? "true" : "false"}
+                            />
+                            <InputError message={errors.jurusan} />
+                        </div>
+
                         <div className="flex gap-4 pt-4">
                             <Button
                                 type="submit"
@@ -255,6 +320,6 @@ export default function AdminEditProfilPage() {
                     </form>
                 </div>
             </div>
-        </AdminDashboardlayout>
+        </PaslonLayout>
     );
 }

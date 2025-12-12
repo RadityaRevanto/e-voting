@@ -2,18 +2,16 @@ import React from "react";
 import { Link } from "@inertiajs/react";
 import PaslonLayout from "../../_components/paslonlayout";
 
-export default function AdminSettingsPage() {
+export default function PaslonSettingsPage() {
     const accountOptions = [
-        { id: 1, label: "EDIT PROFILE", href: "/admin/settings/edit-profil" },
-        { id: 2, label: "CHANGE PASSWORD", href: "/admin/settings/change-password" },
-        { id: 3, label: "LANGUAGE", href: "/admin/settings/language" },
+        { id: 1, label: "EDIT PROFILE", href: "/paslon/settings/edit-profil" },
+        { id: 2, label: "CHANGE PASSWORD", href: "/paslon/settings/change-password" },
     ];
 
     const linkOptions = [
         { id: 1, label: "ABOUT US", href: "/admin/settings/about-us" },
         { id: 2, label: "TERM OF SERVICE", href: "/admin/settings/term-of" },
         { id: 3, label: "PRIVACY POLICE", href: "/admin/settings/privacy-police" },
-        { id: 4, label: "CONTACT US", href: "/admin/settings/contact-us" },
     ];
 
     return (
