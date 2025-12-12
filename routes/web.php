@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\Api\VoteLogController;
+use App\Http\Controllers\Paslon\VisionMissionController;
 
 Route::get('/', function () {
     return Inertia::render('welcome', [
@@ -22,6 +23,14 @@ Route::get('/', function () {
             return Inertia::render('dashboard/paslon/dashboard/page');
         })->name('paslon.dashboard');
         
+        Route::get('dashboard/change', function () {
+            $user = auth()->user();
+            return Inertia::render('dashboard/paslon/dashboard/change/page', [
+                'vision' => $user->vision ?? '',
+                'missions' => $user->mission ?? [''],
+            ]);
+        })->name('paslon.dashboard.change');
+        
         Route::get('settings', function () {
             return Inertia::render('dashboard/paslon/settings/page');
         })->name('paslon.settings');
@@ -33,6 +42,11 @@ Route::get('/', function () {
         Route::get('settings/edit-profil', function () {
             return Inertia::render('dashboard/paslon/settings/edit-profil/page');
         })->name('paslon.settings.edit-profil');
+
+        // API Routes for Paslon
+        Route::prefix('dashboard')->middleware(['auth'])->group(function () {
+            Route::put('vision-mission', [VisionMissionController::class, 'update'])->name('paslon.dashboard.vision-mission.update');
+        });
     });
 
     // Admin Dashboard Routes
