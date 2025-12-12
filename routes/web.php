@@ -25,6 +25,14 @@ Route::get('/', function () {
         Route::get('settings', function () {
             return Inertia::render('dashboard/paslon/settings/page');
         })->name('paslon.settings');
+
+        Route::get('settings/change-password', function () {
+            return Inertia::render('dashboard/paslon/settings/change-password/page');
+        })->name('paslon.settings.change-password');
+
+        Route::get('settings/edit-profil', function () {
+            return Inertia::render('dashboard/paslon/settings/edit-profil/page');
+        })->name('paslon.settings.edit-profil');
     });
 
     // Admin Dashboard Routes
@@ -69,17 +77,9 @@ Route::get('/', function () {
             return Inertia::render('dashboard/admin/settings/change-password/page');
         })->name('admin.settings.change-password');
 
-        Route::get('settings/contact-us', function () {
-            return Inertia::render('dashboard/admin/settings/contact-us/page');
-        })->name('admin.settings.contact-us');
-
         Route::get('settings/edit-profil', function () {
             return Inertia::render('dashboard/admin/settings/edit-profil/page');
         })->name('admin.settings.edit-profil');
-
-        Route::get('settings/language', function () {
-            return Inertia::render('dashboard/admin/settings/language/page');
-        })->name('admin.settings.language');
 
         Route::get('settings/privacy-police', function () {
             return Inertia::render('dashboard/admin/settings/privacy-police/page');

@@ -1,10 +1,10 @@
-import AdminDashboardlayout from "../../../_components/adminlayout";
+import PaslonLayout from "../../../_components/paslonlayout";
 import { useState, FormEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import InputError from "@/pages/dashboard/_components/input-error";
 
-export default function AdminChangePasswordPage() {
+export default function PaslonChangePasswordPage() {
     const [currentPassword, setCurrentPassword] = useState("");
     const [password, setPassword] = useState("");
     const [passwordConfirmation, setPasswordConfirmation] = useState("");
@@ -102,7 +102,7 @@ export default function AdminChangePasswordPage() {
     };
 
     return (
-        <AdminDashboardlayout>
+        <PaslonLayout>
             <div className="bg-white w-full min-h-screen p-6">
                 <div className="w-full">
                     <header className="flex flex-col gap-4 mb-8">
@@ -197,6 +197,6 @@ export default function AdminChangePasswordPage() {
                     </form>
                 </div>
             </div>
-        </AdminDashboardlayout>
+        </PaslonLayout>
     );
 }
