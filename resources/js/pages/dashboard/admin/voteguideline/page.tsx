@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import AdminDashboardlayout from "../../_components/adminlayout";
+import { GripVertical } from "lucide-react";
 
 export default function AdminVoteGuidelinePage() {
     const [guidelines, setGuidelines] = useState([
@@ -15,6 +16,11 @@ export default function AdminVoteGuidelinePage() {
     ]);
 
     const [newGuideline, setNewGuideline] = useState("");
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editingText, setEditingText] = useState("");
+    const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+    const [draggedId, setDraggedId] = useState<number | null>(null);
+    const [dragOverId, setDragOverId] = useState<number | null>(null);
 
     const handleAddGuideline = (e: React.FormEvent) => {
         e.preventDefault();
@@ -25,8 +31,89 @@ export default function AdminVoteGuidelinePage() {
         }
     };
 
+    const handleEditGuideline = (id: number, text: string) => {
+        setEditingId(id);
+        setEditingText(text);
+    };
+
+    const handleUpdateGuideline = (id: number, e: React.FormEvent) => {
+        e.preventDefault();
+        if (editingText.trim()) {
+            setGuidelines(guidelines.map(guideline =>
+                guideline.id === id ? { ...guideline, text: editingText.trim() } : guideline
+            ));
+            setEditingId(null);
+            setEditingText("");
+        }
+    };
+
+    const handleCancelEdit = () => {
+        setEditingId(null);
+        setEditingText("");
+    };
+
     const handleDeleteGuideline = (id: number) => {
-        setGuidelines(guidelines.filter(guideline => guideline.id !== id));
+        setDeleteConfirmId(id);
+    };
+
+    const confirmDelete = () => {
+        if (deleteConfirmId !== null) {
+            setGuidelines(guidelines.filter(guideline => guideline.id !== deleteConfirmId));
+            setDeleteConfirmId(null);
+        }
+    };
+
+    const cancelDelete = () => {
+        setDeleteConfirmId(null);
+    };
+
+    const handleDragStart = (e: React.DragEvent, id: number) => {
+        setDraggedId(id);
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/html", id.toString());
+    };
+
+    const handleDragOver = (e: React.DragEvent, id: number) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        if (draggedId !== id) {
+            setDragOverId(id);
+        }
+    };
+
+    const handleDragLeave = () => {
+        setDragOverId(null);
+    };
+
+    const handleDrop = (e: React.DragEvent, targetId: number) => {
+        e.preventDefault();
+        if (draggedId === null || draggedId === targetId) {
+            setDraggedId(null);
+            setDragOverId(null);
+            return;
+        }
+
+        const draggedIndex = guidelines.findIndex(g => g.id === draggedId);
+        const targetIndex = guidelines.findIndex(g => g.id === targetId);
+
+        if (draggedIndex === -1 || targetIndex === -1) {
+            setDraggedId(null);
+            setDragOverId(null);
+            return;
+        }
+
+        const newGuidelines = [...guidelines];
+        const [removed] = newGuidelines.splice(draggedIndex, 1);
+        newGuidelines.splice(targetIndex, 0, removed);
+
+        setGuidelines(newGuidelines);
+        setDraggedId(null);
+        setDragOverId(null);
+    };
+
+    const handleDragEnd = () => {
+        setDraggedId(null);
+        setDragOverId(null);
     };
 
     return (
@@ -66,28 +153,98 @@ export default function AdminVoteGuidelinePage() {
                             {guidelines.map((guideline, index) => (
                                 <li
                                     key={guideline.id}
-                                    className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors duration-200"
+                                    draggable={editingId !== guideline.id}
+                                    onDragStart={(e) => handleDragStart(e, guideline.id)}
+                                    onDragOver={(e) => handleDragOver(e, guideline.id)}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={(e) => handleDrop(e, guideline.id)}
+                                    onDragEnd={handleDragEnd}
+                                    className={`flex flex-col sm:flex-row items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200 transition-all duration-200 ${
+                                        editingId === guideline.id 
+                                            ? '' 
+                                            : 'hover:bg-gray-100 cursor-move'
+                                    } ${
+                                        draggedId === guideline.id 
+                                            ? 'opacity-50 scale-95' 
+                                            : ''
+                                    } ${
+                                        dragOverId === guideline.id && draggedId !== guideline.id
+                                            ? 'border-[#53599b] border-2 bg-blue-50' 
+                                            : ''
+                                    }`}
                                 >
-                                    <div className="flex items-center gap-3 sm:flex-shrink-0">
-                                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#53599b] rounded-full flex items-center justify-center flex-shrink-0">
-                                            <span className="font-bold text-white text-sm sm:text-base md:text-lg">
-                                                {index + 1}
-                                            </span>
-                                        </div>
-                                        <p className="font-medium text-black text-sm sm:text-base md:text-lg leading-relaxed flex-1 sm:hidden">
-                                            {guideline.text}
-                                        </p>
-                                    </div>
-                                    <p className="font-medium text-black text-sm sm:text-base md:text-lg leading-relaxed flex-1 hidden sm:block">
-                                        {guideline.text}
-                                    </p>
-                                    <button
-                                        onClick={() => handleDeleteGuideline(guideline.id)}
-                                        className="w-full sm:w-auto flex-shrink-0 px-3 sm:px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors duration-200 text-sm sm:text-base"
-                                        aria-label={`Hapus guideline ${index + 1}`}
-                                    >
-                                        Hapus
-                                    </button>
+                                    {editingId === guideline.id ? (
+                                        <>
+                                            <div className="flex items-center gap-3 sm:flex-shrink-0">
+                                                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#53599b] rounded-full flex items-center justify-center flex-shrink-0">
+                                                    <span className="font-bold text-white text-sm sm:text-base md:text-lg">
+                                                        {index + 1}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <form onSubmit={(e) => handleUpdateGuideline(guideline.id, e)} className="flex-1 flex flex-col sm:flex-row gap-3 w-full">
+                                                <input
+                                                    type="text"
+                                                    value={editingText}
+                                                    onChange={(e) => setEditingText(e.target.value)}
+                                                    className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53599b] focus:border-transparent text-sm sm:text-base md:text-lg"
+                                                    autoFocus
+                                                />
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="submit"
+                                                        className="px-3 sm:px-4 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors duration-200 text-sm sm:text-base"
+                                                    >
+                                                        Simpan
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleCancelEdit}
+                                                        className="px-3 sm:px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200 text-sm sm:text-base"
+                                                    >
+                                                        Batal
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="flex items-center gap-3 sm:flex-shrink-0">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="text-gray-400 hover:text-gray-600 transition-colors pointer-events-none">
+                                                        <GripVertical className="w-5 h-5" />
+                                                    </div>
+                                                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#53599b] rounded-full flex items-center justify-center flex-shrink-0">
+                                                        <span className="font-bold text-white text-sm sm:text-base md:text-lg">
+                                                            {index + 1}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <p className="font-medium text-black text-sm sm:text-base md:text-lg leading-relaxed flex-1 sm:hidden">
+                                                    {guideline.text}
+                                                </p>
+                                            </div>
+                                            <p className="font-medium text-black text-sm sm:text-base md:text-lg leading-relaxed flex-1 hidden sm:block">
+                                                {guideline.text}
+                                            </p>
+                                            <div className="w-full sm:w-auto flex gap-2 flex-shrink-0">
+                                                <button
+                                                    onClick={() => handleEditGuideline(guideline.id, guideline.text)}
+                                                    className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors duration-200 text-sm sm:text-base"
+                                                    aria-label={`Edit guideline ${index + 1}`}
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteGuideline(guideline.id)}
+                                                    className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors duration-200 text-sm sm:text-base"
+                                                    aria-label={`Hapus guideline ${index + 1}`}
+                                                >
+                                                    Hapus
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
                                 </li>
                             ))}
                         </ol>
@@ -100,6 +257,34 @@ export default function AdminVoteGuidelinePage() {
                     </main>
                 </div>
             </div>
+
+            {/* Modal Konfirmasi Hapus */}
+            {deleteConfirmId !== null && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 sm:p-8">
+                        <h3 className="text-xl sm:text-2xl font-bold text-[#53589a] mb-4">
+                            Konfirmasi Hapus
+                        </h3>
+                        <p className="text-gray-700 text-base sm:text-lg mb-6">
+                            Yakin mau hapus guideline ini?
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+                            <button
+                                onClick={cancelDelete}
+                                className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gray-500 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200 text-sm sm:text-base"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors duration-200 text-sm sm:text-base"
+                            >
+                                Hapus
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AdminDashboardlayout>
     );
 }
