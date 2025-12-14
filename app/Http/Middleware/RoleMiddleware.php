@@ -36,8 +36,16 @@ class RoleMiddleware
             $userRole = 'paslon';
         }
 
+        // Super admin memiliki akses ke semua role admin
+        // Jika route memerlukan 'admin', super_admin juga bisa akses
+        $allowedRoles = $roles;
+        if (in_array('admin', $roles) && $userRole === 'super_admin') {
+            // Super admin bisa akses route yang memerlukan 'admin'
+            return $next($request);
+        }
+
         // Cek apakah user memiliki role yang diizinkan
-        if (!in_array($userRole, $roles)) {
+        if (!in_array($userRole, $allowedRoles)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Akses ditolak. Role tidak sesuai.',
