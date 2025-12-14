@@ -16,11 +16,29 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create admin user (updateOrCreate untuk menghindari duplicate)
+        // Create super admin (updateOrCreate untuk menghindari duplicate)
         User::updateOrCreate(
             ['email' => 'admin@evoting.com'],
             [
                 'name' => 'Super Admin',
+                'password' => Hash::make('admin123'),
+                'role' => 'super_admin',
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'admin2@evoting.com'],
+            [
+                'name' => 'Admin 2',
+                'password' => Hash::make('admin123'),
+                'role' => 'admin',
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'admin3@evoting.com'],
+            [
+                'name' => 'Admin 3',
                 'password' => Hash::make('admin123'),
                 'role' => 'admin',
             ]

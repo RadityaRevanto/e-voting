@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Helpers\HttpStatus;
 use App\Models\User;
+use App\Models\LoginLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class AuthController extends Controller
@@ -26,12 +28,28 @@ class AuthController extends Controller
         }
 
         try {
-            // Hanya admin yang bisa login
+            // Hanya admin dan super_admin yang bisa login
             $user = User::where('email', $request->email)
-                ->where('role', 'admin')
+                ->whereIn('role', ['admin', 'super_admin'])
                 ->first();
 
+            // Dapatkan informasi device untuk tracking (sebelum validasi)
+            $deviceInfo = $request->header('User-Agent', 'Unknown');
+            $ipAddress = $request->ip();
+            $deviceName = $request->input('device_name', $deviceInfo);
+
             if (!$user || !Hash::check($request->password, $user->password)) {
+                // Log login gagal
+                LoginLog::create([
+                    'user_id' => $user ? $user->id : null,
+                    'ip_address' => $ipAddress,
+                    'user_agent' => $deviceInfo,
+                    'device_name' => $deviceName,
+                    'login_at' => now(),
+                    'status' => 'failed',
+                    'failure_reason' => $user ? 'Password salah' : 'Email tidak ditemukan',
+                ]);
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Email atau password salah',
@@ -39,33 +57,31 @@ class AuthController extends Controller
                 ], 401);
             }
 
-            // Untuk e-voting desa: Multiple sessions dengan limit
-            // Hapus hanya token yang expired, biarkan token aktif tetap valid
-            // Ini memungkinkan admin bekerja dari beberapa device (laptop, tablet, dll)
-            $user->tokens()->where('expires_at', '<', now())->delete();
+            // 1 Session Total untuk Seluruh Sistem
+            // Hanya boleh ada 1 session aktif di seluruh sistem (bukan per user)
+            // Jika ada user login, hapus SEMUA session aktif dari SEMUA user
+            // Ini memastikan hanya 1 admin yang bisa login pada waktu yang sama
 
-            // Limit jumlah session aktif (max 3 device untuk keamanan)
-            $maxActiveSessions = 3;
-            $activeSessions = $user->tokens()
+            // Hapus token yang sudah expired
+            DB::table('personal_access_tokens')
+                ->where('expires_at', '<', now())
+                ->delete();
+
+            // Hapus SEMUA token aktif dari SEMUA user
+            // Ini akan logout semua user yang sedang login
+            DB::table('personal_access_tokens')
                 ->where('expires_at', '>', now())
-                ->count();
+                ->delete();
 
-            // Jika sudah mencapai limit, hapus session terlama
-            if ($activeSessions >= $maxActiveSessions) {
-                $oldestToken = $user->tokens()
-                    ->where('expires_at', '>', now())
-                    ->orderBy('created_at', 'asc')
-                    ->first();
-
-                if ($oldestToken) {
-                    $oldestToken->delete();
-                }
-            }
-
-            // Dapatkan informasi device untuk tracking
-            $deviceInfo = $request->header('User-Agent', 'Unknown');
-            $ipAddress = $request->ip();
-            $deviceName = $request->input('device_name', $deviceInfo);
+            // Log login berhasil
+            LoginLog::create([
+                'user_id' => $user->id,
+                'ip_address' => $ipAddress,
+                'user_agent' => $deviceInfo,
+                'device_name' => $deviceName,
+                'login_at' => now(),
+                'status' => 'success',
+            ]);
 
             // Buat access token dengan expiration 1 jam
             $accessToken = $user->createToken(
@@ -359,6 +375,112 @@ class AuthController extends Controller
                 'success' => true,
                 'message' => 'Session berhasil di-revoke',
                 'data' => [],
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return HttpStatus::code500($th->getMessage());
+        }
+    }
+
+    /**
+     * Get login logs untuk monitoring dan keamanan
+     * Hanya Super Admin yang bisa akses endpoint ini
+     * Berguna untuk melihat history login dan mendeteksi kecurangan
+     * Default menampilkan semua log dari semua user
+     */
+    public function getLoginLogs(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User tidak terautentikasi',
+                    'data' => [],
+                ], 401);
+            }
+
+            // Hanya super_admin yang bisa akses log login
+            if (!$user instanceof User || $user->role !== 'super_admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akses ditolak. Hanya Super Admin yang bisa melihat log login.',
+                    'data' => [],
+                ], 403);
+            }
+
+            // Query parameters
+            $limit = $request->input('limit', 50);
+            $offset = $request->input('offset', 0);
+            $userId = $request->input('user_id');
+            $ipAddress = $request->input('ip_address');
+            $status = $request->input('status'); // success, failed
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
+
+            // Build query
+            // Super admin bisa melihat semua log dari semua user (default)
+            $query = LoginLog::with('user:id,name,email')
+                ->orderBy('login_at', 'desc');
+
+            // Filter by user_id (jika diisi)
+            if ($userId) {
+                $query->where('user_id', $userId);
+            }
+
+            // Filter by IP address
+            if ($ipAddress) {
+                $query->where('ip_address', $ipAddress);
+            }
+
+            // Filter by status
+            if ($status) {
+                $query->where('status', $status);
+            }
+
+            // Filter by date range
+            if ($startDate) {
+                $query->where('login_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $query->where('login_at', '<=', $endDate);
+            }
+
+            // Get total count before pagination
+            $total = $query->count();
+
+            // Apply pagination
+            $logs = $query->limit($limit)
+                ->offset($offset)
+                ->get()
+                ->map(function ($log) {
+                    return [
+                        'id' => $log->id,
+                        'user' => $log->user ? [
+                            'id' => $log->user->id,
+                            'name' => $log->user->name,
+                            'email' => $log->user->email,
+                        ] : null,
+                        'ip_address' => $log->ip_address,
+                        'user_agent' => $log->user_agent,
+                        'device_name' => $log->device_name,
+                        'login_at' => $log->login_at->format('Y-m-d H:i:s'),
+                        'status' => $log->status,
+                        'failure_reason' => $log->failure_reason,
+                        'created_at' => $log->created_at->format('Y-m-d H:i:s'),
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Log login berhasil diambil',
+                'data' => [
+                    'logs' => $logs,
+                    'total' => $total,
+                    'limit' => $limit,
+                    'offset' => $offset,
+                ],
             ], 200);
 
         } catch (\Throwable $th) {

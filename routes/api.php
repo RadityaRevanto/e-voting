@@ -73,6 +73,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Live Result
         Route::get('/vote/life-result', [VoteController::class, 'lifeResult']);
+
+        // Monitoring login logs (untuk keamanan)
+        Route::get('/login-logs', [AuthController::class, 'getLoginLogs']);
     });
 
     // Current user
