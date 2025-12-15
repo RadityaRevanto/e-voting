@@ -10,15 +10,15 @@ export default function Navbar() {
     };
 
     return (
-        <header className="relative text-white">
+        <header className="relative text-white pb-10">
             {/* Wave di bawah navbar */}
             <img
                 src="/assets/images/navbar/bg-navbar.png"
                 alt="Navbar background"
-                className="pointer-events-none absolute inset-x-0 -bottom-15 w-full select-none hidden md:block"
+                className="pointer-events-none absolute inset-x-0 bottom-0 w-full select-none hidden md:block md:top-0 md:h-35 xl:h-50 xl:-top-7"
             />
 
-            <nav className="relative z-20 flex items-center justify-between px-6 py-4 md:px-8 md:py-5">
+            <nav className="relative z-20 flex items-center justify-between px-6 py-4 md:px-10 md:py-5">
                 {/* Logo di pojok kiri (hanya tampil di md ke atas) */}
                 <div className="flex items-center gap-2">
                     <img
@@ -28,8 +28,35 @@ export default function Navbar() {
                     />
                 </div>
 
+                {/* Tombol hamburger (mobile) */}
+                <button
+                    type="button"
+                    className="inline-flex items-center justify-center rounded-md border border-black/60 px-3 py-2 text-sm font-semibold text-black md:hidden"
+                    onClick={() => setIsOpen((prev) => !prev)}
+                    aria-label="Toggle navigation"
+                >
+                    <span className="sr-only">Open main menu</span>
+                    <div className="space-y-1.5">
+                        <span
+                            className={`block h-0.5 w-6 bg-black transition-transform ${
+                                isOpen ? 'translate-y-1.5 rotate-45' : ''
+                            }`}
+                        />
+                        <span
+                            className={`block h-0.5 w-6 bg-black transition-opacity ${
+                                isOpen ? 'opacity-0' : 'opacity-100'
+                            }`}
+                        />
+                        <span
+                            className={`block h-0.5 w-6 bg-black transition-transform ${
+                                isOpen ? '-translate-y-1.5 -rotate-45' : ''
+                            }`}
+                        />
+                    </div>
+                </button>
+
                 {/* Menu (desktop) */}
-                <ul className="hidden items-center gap-10 text-base font-semibold md:flex md:gap-40 md:text-lg">
+                <ul className="hidden items-center gap-6 text-sm font-semibold md:flex md:gap-20 md:text-base xl:gap-28 xl:text-base">
                     <li
                         className="relative cursor-pointer"
                         onClick={() => handleMenuClick('home')}
@@ -71,36 +98,9 @@ export default function Navbar() {
                 {/* Login button (desktop) */}
                 <button
                     type="button"
-                    className="hidden rounded-full border border-white px-8 py-2 text-base font-semibold transition hover:bg-white hover:text-[#3943B7] md:inline-block md:px-10 md:py-3 md:text-lg"
+                    className="hidden rounded-full border border-white px-6 py-2 text-sm font-semibold transition hover:bg-white hover:text-[#3943B7] md:inline-block md:px-7 md:py-2.5 md:text-base xl:px-8 xl:py-2.5 xl:text-base"
                 >
                     Log In
-                </button>
-
-                {/* Tombol hamburger (mobile) */}
-                <button
-                    type="button"
-                    className="inline-flex items-center justify-center rounded-md border border-black/60 px-3 py-2 text-sm font-semibold text-black md:hidden"
-                    onClick={() => setIsOpen((prev) => !prev)}
-                    aria-label="Toggle navigation"
-                >
-                    <span className="sr-only">Open main menu</span>
-                    <div className="space-y-1.5">
-                        <span
-                            className={`block h-0.5 w-6 bg-black transition-transform ${
-                                isOpen ? 'translate-y-1.5 rotate-45' : ''
-                            }`}
-                        />
-                        <span
-                            className={`block h-0.5 w-6 bg-black transition-opacity ${
-                                isOpen ? 'opacity-0' : 'opacity-100'
-                            }`}
-                        />
-                        <span
-                            className={`block h-0.5 w-6 bg-black transition-transform ${
-                                isOpen ? '-translate-y-1.5 -rotate-45' : ''
-                            }`}
-                        />
-                    </div>
                 </button>
             </nav>
 
@@ -169,7 +169,7 @@ export default function Navbar() {
                 {/* Tombol login di bawah menu */}
                 <button
                     type="button"
-                    className="mt-8 w-full rounded-full border border-white px-4 py-2 text-base font-semibold transition hover:bg-white hover:text-[#3943B7]"
+                    className="mt-8 w-full rounded-full border border-white px-4 py-1 text-base font-semibold transition hover:bg-white hover:text-[#3943B7]"
                 >
                     Log In
                 </button>
