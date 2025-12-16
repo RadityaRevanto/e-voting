@@ -1,19 +1,28 @@
 import React from "react";
-import { Briefcase, Pencil, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 import { Link } from "@inertiajs/react";
 
 export const VisionMissionSection = () => {
   const candidateData = {
-    name: "Aditya Eka Narayan",
+    ketua: "Aditya Eka Narayan",
+    wakilKetua: "Raditya Gavra",
     title: "VILLAGE HEAD ELECTION",
-    age: "22 years old",
-    department: "System Development",
     vision: "To build a progressive, transparent, and prosperous village for all residents.",
     missions: [
       "Improve public services through faster, more transparent, and easily accessible systems.",
       "Strengthen the village economy by supporting local businesses, providing skill training, and maximizing local resources.",
       "Create a safe and comfortable environment through better infrastructure, cleanliness programs, and community empowerment.",
     ],
+  };
+
+  // Fungsi untuk mendapatkan inisial dari nama
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
@@ -24,36 +33,41 @@ export const VisionMissionSection = () => {
             <div className="absolute inset-0 bg-[#53599b] rounded-full" />
             
             <div className="absolute top-2 left-2 w-[84px] h-[84px] md:w-[100px] md:h-[100px] rounded-full bg-gradient-to-br from-[#53599b] to-[#3a3f6b] flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-3xl md:text-4xl">AE</span>
+              <span className="text-white font-bold text-2xl md:text-3xl">
+                {getInitials(candidateData.ketua)}
+              </span>
             </div>
           </div>
         </div>
 
         <div className="flex-1">
-          <h2 className="text-[#53599b] text-2xl md:text-3xl font-bold mb-1">
-            {candidateData.name}
-          </h2>
-          <p className="text-[#5760c0] text-base md:text-lg font-semibold mb-3">
+          <p className="text-[#5760c0] text-lg md:text-xl xl:text-2xl font-semibold mb-3">
             {candidateData.title}
           </p>
 
-          <div className="flex flex-col gap-1 mb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-[15px] h-[15px] flex items-center justify-center">
-                <UserRound className="w-[15px] h-[15px] text-[#9296d1]" />
+          <div className="flex flex-col gap-3 mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-[20px] h-[20px] md:w-[24px] md:h-[24px] flex items-center justify-center">
+                <UserRound className="w-[20px] h-[20px] md:w-[24px] md:h-[24px] text-[#9296d1]" />
               </div>
-              <p className="text-[#9296d1] text-sm">
-                {candidateData.age}
-              </p>
+              <div className="flex flex-col">
+                <span className="text-[#53599b] text-sm md:text-base font-semibold">Ketua Paslon:</span>
+                <p className="text-[#9296d1] text-base md:text-lg xl:text-xl font-medium">
+                  {candidateData.ketua}
+                </p>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="w-[15px] h-[15px] flex items-center justify-center">
-                <Briefcase className="w-[15px] h-[15px] text-[#9296d1]" />
+            <div className="flex items-center gap-3">
+              <div className="w-[20px] h-[20px] md:w-[24px] md:h-[24px] flex items-center justify-center">
+                <UserRound className="w-[20px] h-[20px] md:w-[24px] md:h-[24px] text-[#9296d1]" />
               </div>
-              <p className="text-[#9296d1] text-sm">
-                {candidateData.department}
-              </p>
+              <div className="flex flex-col">
+                <span className="text-[#53599b] text-sm md:text-base font-semibold">Wakil Ketua Paslon:</span>
+                <p className="text-[#9296d1] text-base md:text-lg xl:text-xl font-medium">
+                  {candidateData.wakilKetua}
+                </p>
+              </div>
             </div>
           </div>
         </div>
