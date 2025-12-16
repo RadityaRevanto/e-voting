@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from '@inertiajs/react';
 
 export default function Navbar() {
     const [activeMenu, setActiveMenu] = useState<'home' | 'about' | 'faqs' | 'contact'>('home');
@@ -115,12 +116,12 @@ export default function Navbar() {
                 </ul>
 
                 {/* Login button (desktop) */}
-                <button
-                    type="button"
+                <Link
+                    href="/login"
                     className="hidden rounded-full border border-white px-6 py-2 text-sm font-semibold transition hover:bg-white hover:text-[#3943B7] md:inline-block md:px-7 md:py-2.5 md:text-base xl:px-8 xl:py-2.5 xl:text-base"
                 >
                     Log In
-                </button>
+                </Link>
             </nav>
 
             {/* Overlay & Sidebar (mobile) */}
@@ -186,12 +187,13 @@ export default function Navbar() {
                 </ul>
 
                 {/* Tombol login di bawah menu */}
-                <button
-                    type="button"
-                    className="mt-8 w-full rounded-full border border-white px-4 py-1 text-base font-semibold transition hover:bg-white hover:text-[#3943B7]"
+                <Link
+                    href="/login"
+                    className="mt-8 block w-full rounded-full border border-white px-4 py-1 text-center text-base font-semibold transition hover:bg-white hover:text-[#3943B7]"
+                    onClick={() => setIsOpen(false)}
                 >
                     Log In
-                </button>
+                </Link>
             </aside>
         </header>
     );

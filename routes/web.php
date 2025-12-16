@@ -123,6 +123,17 @@ Route::prefix('user')->group(function () {
 
 });
 
+    // Superadmin Dashboard Routes
+    Route::prefix('superadmin')->group(function () {
+        Route::get('log-activity', function () {
+            return Inertia::render('dashboard/superadmin/log-activity/page');
+        })->name('superadmin.log-activity');
+
+        Route::get('akun-admin', function () {
+            return Inertia::render('dashboard/superadmin/akun-admin.tsx/page');
+        })->name('superadmin.akun-admin');
+    });
+
 // API Routes
 Route::prefix('api')->middleware(['auth'])->group(function () {
     Route::post('votes', [VoteLogController::class, 'store'])->name('api.votes.store');
