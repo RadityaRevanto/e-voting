@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PaslonController;
 use App\Http\Controllers\VoteController;
 use App\Http\Controllers\WargaController;
 use App\Http\Controllers\QRCodeController;
+use App\Http\Controllers\UtilityController;
 use App\Http\Controllers\VoteGuidelineController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 | PUBLIC ROUTES (NO AUTH)
 |--------------------------------------------------------------------------
 */
+Route::get('/hello-world', [UtilityController::class, 'helloWorld']);
 
 // Auth (login & refresh)
 Route::prefix('auth')->group(function () {
@@ -59,6 +62,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Warga
         Route::post('/register-nik', [WargaController::class, 'registerNik']);
+        
+        // Paslon
+        Route::prefix('paslon')->group(function () {
+            Route::get('/', [PaslonController::class, 'index']);
+            Route::get('/{id}', [PaslonController::class, 'show']);
+            Route::post('/register', [PaslonController::class, 'register']);
+            Route::delete('/{id}/delete', [PaslonController::class, 'deleteById']);
+        });
 
         // Vote Guidelines (admin manage)
         Route::prefix('vote-guidelines')->group(function () {
@@ -76,6 +87,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Monitoring login logs (untuk keamanan)
         Route::get('/login-logs', [AuthController::class, 'getLoginLogs']);
+    });
+
+    // Paslon only
+    Route::middleware('role:paslon')->prefix('paslon')->group(function () {
+        Route::get('/', [PaslonController::class, 'test']);
     });
 
     // Current user
