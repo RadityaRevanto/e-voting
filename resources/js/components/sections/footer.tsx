@@ -2,7 +2,7 @@ export default function Footer() {
     return (
         <section id="footer" className="overflow-hidden">
             <div
-                className="relative mt-20 text-white py-12 md:py-16 lg:py-18"
+                className="relative mt-20 text-white py-12 md:py-16 lg:py-28"
                 style={{
                     backgroundImage: "url('/assets/images/footer/bg-footer.png')",
                     backgroundSize: 'cover',
