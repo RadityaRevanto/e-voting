@@ -14,10 +14,16 @@ class Paslon extends Model
      */
     protected $table = 'paslon';
 
+    // app/Models/Paslon.php
     protected $fillable = [
         'id',
         'nama_ketua',
+        'umur_ketua',
+        'jurusan_ketua',
         'nama_wakil_ketua',
+        'umur_wakil_ketua',
+        'jurusan_wakil_ketua',
+        'foto_paslon',
         'visi',
         'misi'
     ];
