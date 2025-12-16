@@ -1,7 +1,7 @@
 export default function Identity() {
     return (
         <section id="identity">
-            <div className="relative w-full bg-[#F7F7FC] flex flex-col items-center justify-center px-6 py-20 md:-mt-80 lg:-mt-25 overflow-hidden">
+            <div className="relative w-full bg-[#F7F7FC] flex flex-col items-center justify-center px-6 py-20 md:-mt-80 lg:-mt-1 overflow-hidden">
                 {/* Title */}
                 <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#1a237e] mb-12 md:mb-26 md:-mt-10 z-10">
                     Creator System

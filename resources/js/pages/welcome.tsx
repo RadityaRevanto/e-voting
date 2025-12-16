@@ -6,7 +6,7 @@ import FAQs from "@/components/sections/faqs";
 
 export default function Home() {
     return (
-        <div className="w-full min-h-screen overflow-x-hidden relative">
+        <div className="w-full min-h-screen overflow-hidden relative">
             <Navbar />
             <Hero />
             <Identity />
