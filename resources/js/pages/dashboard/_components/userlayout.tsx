@@ -1,8 +1,8 @@
 import { ReactNode } from "react";
 import * as React from "react"
-import { CheckSquare, FileText, LogOut } from "lucide-react"
-import { Link } from "@inertiajs/react"
+import { CheckSquare, FileText } from "lucide-react"
 import { NavMain } from "@/pages/dashboard/_components/nav-main"
+import { LogoutConfirmation } from "@/pages/dashboard/_components/logout-confirmation"
 import {
   Sidebar,
   SidebarContent,
@@ -83,25 +83,7 @@ function AppSidebarUser({ ...props }: React.ComponentProps<typeof Sidebar>) {
               tooltip="Log-Out"
               className="group-data-[collapsible=icon]:justify-center rounded-2xl"
             >
-              <Link 
-                href="#"
-                className="flex items-center gap-6 
-                           group-data-[collapsible=icon]:justify-center 
-                           transition-colors duration-200 
-                           w-full px-5 py-4 rounded-2xl 
-                           text-[#53599b] 
-                           group-hover/menu-item:text-white"
-              >
-                <LogOut className="h-7 w-7 flex-shrink-0 text-[#53599b] 
-                                  group-hover/menu-item:text-white 
-                                  transition-colors duration-200" />
-                <span className="group-data-[collapsible=icon]:hidden 
-                                 font-bold text-lg text-[#53599b] 
-                                 group-hover/menu-item:text-white 
-                                 transition-colors duration-200">
-                  Log-Out
-                </span>
-              </Link>
+              <LogoutConfirmation />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

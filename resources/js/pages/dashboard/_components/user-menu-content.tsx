@@ -1,12 +1,21 @@
+import { useState } from 'react';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { UserInfo } from '@/pages/dashboard/_components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
-import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
 import { type User } from '@/types';
 import { Link, router } from '@inertiajs/react';
@@ -18,10 +27,15 @@ interface UserMenuContentProps {
 
 export function UserMenuContent({ user }: UserMenuContentProps) {
     const cleanup = useMobileNavigation();
+    const [open, setOpen] = useState(false);
 
     const handleLogout = () => {
         cleanup();
-        router.flushAll();
+        router.post("/logout", {}, {
+            onSuccess: () => {
+                router.visit("/");
+            },
+        });
     };
 
     return (
@@ -48,17 +62,43 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-                <Link
+                <button
+                    type="button"
                     className="block w-full"
-                    href={logout()}
-                    as="button"
-                    onClick={handleLogout}
+                    onClick={() => setOpen(true)}
                     data-test="logout-button"
                 >
                     <LogOut className="mr-2" />
                     Log out
-                </Link>
+                </button>
             </DropdownMenuItem>
+
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Konfirmasi Logout</DialogTitle>
+                        <DialogDescription>
+                            Apakah Anda yakin ingin keluar?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setOpen(false)}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleLogout}
+                            className="bg-gradient-to-r from-[#6B73C1] to-[#8B94D4] hover:from-[#5a62a8] hover:to-[#7a83c0] text-white"
+                        >
+                            Ya
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }
