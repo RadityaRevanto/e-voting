@@ -17,7 +17,6 @@ class Paslon extends Model
     // app/Models/Paslon.php
     protected $fillable = [
         'id',
-        'user_id',
         'nama_ketua',
         'umur_ketua',
         'jurusan_ketua',

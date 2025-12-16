@@ -2,13 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Helpers\HttpStatus;
-use App\Http\Resources\Paslon\PaslonPreviewResource;
 use App\Models\Paslon;
-use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
 
 class PaslonController extends Controller
 {
@@ -82,8 +77,8 @@ class PaslonController extends Controller
         $paslon = Paslon::all();
         return response()->json([
             'success' => true,
-            'message' => "Menampilkan data preview PASLON",
-            'data' => PaslonPreviewResource::collection($paslon),
+            'message' => "Vote berhasil dibuat",
+            'data' => $paslon,
         ], 200);
     }
 
