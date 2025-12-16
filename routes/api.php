@@ -62,7 +62,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Warga
         Route::post('/register-nik', [WargaController::class, 'registerNik']);
-        
+
         // Paslon
         Route::prefix('paslon')->group(function () {
             Route::get('/', [PaslonController::class, 'index']);
@@ -89,9 +89,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/login-logs', [AuthController::class, 'getLoginLogs']);
     });
 
+    // routes/api.php
     // Paslon only
     Route::middleware('role:paslon')->prefix('paslon')->group(function () {
         Route::get('/', [PaslonController::class, 'test']);
+        Route::post('/update-visi-misi', [PaslonController::class, 'updateVisiMisi']);
     });
 
     // Current user
