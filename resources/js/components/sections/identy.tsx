@@ -17,30 +17,30 @@ export default function Identity() {
                                 Aditya Eka Narayan
                             </p>
                             <p className="text-lg md:text-3xl text-slate-600 font-medium">
-                                Raditya Revanto
+                                Mch Raditya Revanto
                             </p>
                             <p className="text-lg md:text-3xl text-slate-600 font-medium">
-                                Javier Gavra
+                                Javier Gavra Abhinaya
                             </p>
                             {/* Duplicate set 2 */}
                             <p className="text-lg md:text-3xl text-slate-600 font-medium">
                                 Aditya Eka Narayan
                             </p>
                             <p className="text-lg md:text-3xl text-slate-600 font-medium">
-                                Raditya Revanto
+                                Mch Raditya Revanto
                             </p>
                             <p className="text-lg md:text-3xl text-slate-600 font-medium">
-                                Javier Gavra
+                                Javier Gavra Abhinaya
                             </p>
                             {/* Duplicate set 3 */}
                             <p className="text-lg md:text-3xl text-slate-600 font-medium">
                                 Aditya Eka Narayan
                             </p>
                             <p className="text-lg md:text-3xl text-slate-600 font-medium">
-                                Raditya Revanto
+                                Mch Raditya Revanto
                             </p>
                             <p className="text-lg md:text-3xl text-slate-600 font-medium">
-                                Javier Gavra
+                                Javier Gavra Abhinaya
                             </p>
                         </div>
                     </div>

@@ -48,7 +48,7 @@ function AnimatedSection({ children }: { children: React.ReactNode }) {
 
 export default function Home() {
     return (
-        <div className="w-full min-h-screen overflow-hidden relative">
+        <div className="w-full min-h-screen overflow-hidden relative bg-white">
             <Navbar />
             <AnimatedSection>
                 <Hero />
