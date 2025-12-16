@@ -13,11 +13,19 @@ return new class extends Migration
     {
         Schema::create('paslon', function (Blueprint $table) {
             $table->id();
+            $table->integer('user_id');
             $table->string('nama_ketua', length:100);
+            $table->string('jurusan_ketua', length:50)->nullable();
             $table->string('nama_wakil_ketua', length:100);
-            $table->text('visi');
-            $table->text('misi');
+            $table->string('jurusan_wakil_ketua', length:50)->nullable();
+            $table->text('visi')->nullable();
+            $table->text('misi')->nullable();
             $table->timestamps();
+
+            $table->foreign('user_id')
+            ->references('id')
+            ->on('users')
+            ->onDelete('cascade');
         });
     }
 
