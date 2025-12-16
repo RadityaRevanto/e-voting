@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "@inertiajs/react";
 
 export interface Candidate {
   id: number;
@@ -80,15 +81,15 @@ export function CandidateCard({
           </span>
         </button>
 
-        <button
-          type="button"
-          className="w-[137px] h-[45px] px-[13px] py-[7px] bg-white border border-solid border-[#232f9b] flex items-center justify-center rounded-[30px]"
+        <Link
+          href={`/user/vote/view/${candidate.id}`}
+          className="w-[137px] h-[45px] px-[13px] py-[7px] bg-white border border-solid border-[#232f9b] flex items-center justify-center rounded-[30px] hover:bg-[#232f9b]/5 transition-colors"
           aria-label={`View details for ${candidate.name}`}
         >
           <span className="[font-family:'Poppins-Bold',Helvetica] font-bold text-[#232f9b] text-xs tracking-[0] leading-[normal]">
             VIEW DETAIL
           </span>
-        </button>
+        </Link>
       </div>
     </article>
   );

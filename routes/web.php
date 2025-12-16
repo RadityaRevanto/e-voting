@@ -111,6 +111,12 @@ Route::prefix('user')->group(function () {
         return Inertia::render('dashboard/user/vote/page');
     })->name('user.vote');
 
+    Route::get('vote/view/{id}', function ($id) {
+        return Inertia::render('dashboard/user/vote/view/page', [
+            'candidateId' => $id,
+        ]);
+    })->name('user.vote.view');
+
     Route::get('voteguideline', function () {
         return Inertia::render('dashboard/user/voteguideline/page');
     })->name('user.voteguideline');
