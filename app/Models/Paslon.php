@@ -16,11 +16,8 @@ class Paslon extends Model
 
     protected $fillable = [
         'id',
-        'user_id',
         'nama_ketua',
-        'jurusan_ketua',
         'nama_wakil_ketua',
-        'jurusan_wakil_ketua',
         'visi',
         'misi'
     ];

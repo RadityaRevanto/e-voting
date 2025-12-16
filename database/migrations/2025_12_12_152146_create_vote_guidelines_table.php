@@ -11,12 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('paslon', function (Blueprint $table) {
+        Schema::create('vote_guidelines', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_ketua', length:100);
-            $table->string('nama_wakil_ketua', length:100);
-            $table->text('visi');
-            $table->text('misi');
+            $table->text('text');
             $table->timestamps();
         });
     }
@@ -26,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('paslon');
+        Schema::dropIfExists('vote_guidelines');
     }
 };
