@@ -37,7 +37,7 @@ export default function FAQs() {
 
     return (
         <section id="faqs">
-            <div className="relative min-h-screen w-full bg-gradient-to-b from-[#EFF2FF] via-[#F7F7FC] to-white px-6 py-20 md:px-10 lg:px-16">
+            <div className="relative w-full bg-gradient-to-b from-white via-[#EFF2FF] to-white px-6 py-20 md:px-10 lg:px-16">
                 {/* Decorative background */}
                 <div className="pointer-events-none absolute inset-0">
                     <div className="absolute right-[-4rem] top-[-4rem] h-48 w-48 rounded-full bg-[#dfe3ff] opacity-40 blur-3xl" />

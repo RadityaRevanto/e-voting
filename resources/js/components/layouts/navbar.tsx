@@ -1,11 +1,30 @@
 import { useState } from 'react';
 
 export default function Navbar() {
-    const [activeMenu, setActiveMenu] = useState<'home' | 'about' | 'contact' | 'faqs'>('home');
+    const [activeMenu, setActiveMenu] = useState<'home' | 'about' | 'faqs' | 'contact'>('home');
     const [isOpen, setIsOpen] = useState(false); // state untuk sidebar mobile
 
-    const handleMenuClick = (menu: 'home' | 'about' | 'contact' | 'faqs') => {
+    const scrollToSection = (sectionId: 'hero' | 'about' | 'faqs' | 'contact') => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
+    const handleMenuClick = (menu: 'home' | 'about' | 'faqs' | 'contact') => {
         setActiveMenu(menu);
+
+        // Mapping menu ke id section
+        if (menu === 'home') {
+            scrollToSection('hero');
+        } else if (menu === 'about') {
+            scrollToSection('about');
+        } else if (menu === 'faqs') {
+            scrollToSection('faqs');
+        } else if (menu === 'contact') {
+            scrollToSection('contact');
+        }
+
         setIsOpen(false); // tutup sidebar setelah klik menu di mobile
     };
 
@@ -77,19 +96,19 @@ export default function Navbar() {
                     </li>
                     <li
                         className="relative cursor-pointer"
-                        onClick={() => handleMenuClick('contact')}
+                        onClick={() => handleMenuClick('faqs')}
                     >
-                        <span>Contact Us</span>
-                        {activeMenu === 'contact' && (
+                        <span>FaQS</span>
+                        {activeMenu === 'faqs' && (
                             <span className="absolute left-0 -bottom-1 h-[2px] w-full rounded-full bg-white" />
                         )}
                     </li>
                     <li
                         className="relative cursor-pointer"
-                        onClick={() => handleMenuClick('faqs')}
+                        onClick={() => handleMenuClick('contact')}
                     >
-                        <span>FaQS</span>
-                        {activeMenu === 'faqs' && (
+                        <span>Contact Us</span>
+                        {activeMenu === 'contact' && (
                             <span className="absolute left-0 -bottom-1 h-[2px] w-full rounded-full bg-white" />
                         )}
                     </li>
@@ -150,19 +169,19 @@ export default function Navbar() {
                     </li>
                     <li
                         className={`cursor-pointer rounded-full px-3 py-2 ${
-                            activeMenu === 'contact' ? 'bg-white/10' : 'hover:bg-white/5'
-                        }`}
-                        onClick={() => handleMenuClick('contact')}
-                    >
-                        Contact Us
-                    </li>
-                    <li
-                        className={`cursor-pointer rounded-full px-3 py-2 ${
                             activeMenu === 'faqs' ? 'bg-white/10' : 'hover:bg-white/5'
                         }`}
                         onClick={() => handleMenuClick('faqs')}
                     >
                         FaQS
+                    </li>
+                    <li
+                        className={`cursor-pointer rounded-full px-3 py-2 ${
+                            activeMenu === 'contact' ? 'bg-white/10' : 'hover:bg-white/5'
+                        }`}
+                        onClick={() => handleMenuClick('contact')}
+                    >
+                        Contact Us
                     </li>
                 </ul>
 
