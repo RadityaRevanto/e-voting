@@ -168,3 +168,29 @@
     }
 }
 
+@keyframes parallax-left {
+  0% {
+    transform: translateX(100vw);
+  }
+  100% {
+    transform: translateX(-100vw);
+  }
+}
+
+@keyframes parallax-right {
+  0% {
+    transform: translateX(-100vw);
+  }
+  100% {
+    transform: translateX(100vw);
+  }
+}
+
+.animate-parallax-left {
+  animation: parallax-left 20s linear infinite;
+}
+
+.animate-parallax-right {
+  animation: parallax-right 20s linear infinite;
+}
+
