@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "@inertiajs/react";
 
 export interface Candidate {
@@ -23,9 +23,16 @@ export function CandidateCard({
   onVote,
   onOpenScanner,
 }: CandidateCardProps) {
+  const [isClicking, setIsClicking] = useState(false);
+
   const handleVoteClick = () => {
     if (isQrScanned) {
-      onVote(candidate.id);
+      setIsClicking(true);
+      // Reset animation setelah selesai
+      setTimeout(() => {
+        setIsClicking(false);
+        onVote(candidate.id);
+      }, 200);
     } else {
       onOpenScanner();
     }
@@ -68,22 +75,29 @@ export function CandidateCard({
           type="button"
           onClick={handleVoteClick}
           disabled={!isQrScanned}
-          className={`w-[135px] h-[45px] px-[27px] py-[7px] bg-[#232f9b] flex items-center justify-center rounded-[30px] ${
-            isSelected ? "ring-2 ring-white" : ""
+          className={`relative w-[135px] h-[45px] px-[27px] py-[7px] bg-[#232f9b] flex items-center justify-center rounded-[30px] shadow-[0px_4px_12px_rgba(35,47,155,0.4)] transition-all duration-200 ${
+            isSelected ? "ring-2 ring-white ring-offset-2 ring-offset-transparent" : ""
           } ${
-            !isQrScanned ? "opacity-50 cursor-not-allowed" : ""
+            !isQrScanned ? "opacity-50 cursor-not-allowed" : "hover:bg-[#1a2580] hover:shadow-[0px_6px_16px_rgba(35,47,155,0.5)] active:scale-95"
+          } ${
+            isClicking ? "scale-95 animate-pulse" : ""
           }`}
           aria-pressed={isSelected}
           aria-label={`Vote for ${candidate.name}`}
         >
-          <span className="[font-family:'Poppins-Bold',Helvetica] font-bold text-white text-sm tracking-[0] leading-[normal]">
+          <span className={`[font-family:'Poppins-Bold',Helvetica] font-bold text-white text-sm tracking-[0] leading-[normal] transition-all ${
+            isClicking ? "scale-110" : ""
+          }`}>
             VOTE
           </span>
+          {isClicking && (
+            <span className="absolute inset-0 rounded-[30px] bg-white opacity-30 animate-ping" />
+          )}
         </button>
 
         <Link
           href={`/user/vote/view/${candidate.id}`}
-          className="w-[137px] h-[45px] px-[13px] py-[7px] bg-white border border-solid border-[#232f9b] flex items-center justify-center rounded-[30px] hover:bg-[#232f9b]/5 transition-colors"
+          className="w-[137px] h-[45px] px-[13px] py-[7px] bg-white border border-solid border-[#232f9b] flex items-center justify-center rounded-[30px] shadow-[0px_2px_8px_rgba(35,47,155,0.2)] hover:bg-[#232f9b]/5 hover:shadow-[0px_4px_12px_rgba(35,47,155,0.3)] active:scale-95 transition-all duration-200"
           aria-label={`View details for ${candidate.name}`}
         >
           <span className="[font-family:'Poppins-Bold',Helvetica] font-bold text-[#232f9b] text-xs tracking-[0] leading-[normal]">
