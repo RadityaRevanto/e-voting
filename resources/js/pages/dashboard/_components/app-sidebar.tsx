@@ -7,13 +7,13 @@ import {
   FileText,
   Sparkles,
   Settings2,
-  LogOut,
 } from "lucide-react"
-import { Link, usePage } from "@inertiajs/react"
+import { usePage } from "@inertiajs/react"
 import { isSameUrl } from "@/lib/utils"
 
 import { NavMain } from "@/pages/dashboard/_components/nav-main"
 import { NavUserProfile } from "@/pages/dashboard/_components/nav-user-profile"
+import { LogoutConfirmation } from "@/pages/dashboard/_components/logout-confirmation"
 import {
   Sidebar,
   SidebarContent,
@@ -87,12 +87,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton 
               asChild 
               tooltip="Log-Out"
-              className="group-data-[collapsible=icon]:justify-center"
+              className="group-data-[collapsible=icon]:justify-center rounded-2xl"
             >
-              <Link href="#" className="flex items-center gap-5 group-data-[collapsible=icon]:justify-center transition-colors duration-200 w-full px-5 py-4 rounded-2xl hover:bg-gray-100">
-                <LogOut className="h-8 w-8 flex-shrink-0 text-[#53599b] peer-hover/menu-button:text-white transition-colors duration-200" />
-                <span className="group-data-[collapsible=icon]:hidden font-semibold text-xl text-[#53599b] peer-hover/menu-button:text-white transition-colors duration-200">Log-Out</span>
-              </Link>
+              <LogoutConfirmation />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
