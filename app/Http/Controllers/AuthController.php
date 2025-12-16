@@ -57,21 +57,12 @@ class AuthController extends Controller
                 ], 401);
             }
 
-            // 1 Session Total untuk Seluruh Sistem
-            // Hanya boleh ada 1 session aktif di seluruh sistem (bukan per user)
-            // Jika ada user login, hapus SEMUA session aktif dari SEMUA user
-            // Ini memastikan hanya 1 admin yang bisa login pada waktu yang sama
-
             // Hapus token yang sudah expired
             DB::table('personal_access_tokens')
                 ->where('expires_at', '<', now())
                 ->delete();
 
-            // Hapus SEMUA token aktif dari SEMUA user
-            // Ini akan logout semua user yang sedang login
-            DB::table('personal_access_tokens')
-                ->where('expires_at', '>', now())
-                ->delete();
+            $user->tokens()->delete();
 
             // Log login berhasil
             LoginLog::create([
