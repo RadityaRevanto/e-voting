@@ -37,17 +37,21 @@ return [
     'guard' => ['web'],
 
     /*
-    |--------------------------------------------------------------------------
-    | Expiration Minutes
-    |--------------------------------------------------------------------------
-    |
-    | This value controls the number of minutes until an issued token will be
-    | considered expired. This will override any values set in the token's
-    | "expires_at" attribute, but first-party sessions are not affected.
-    |
-    */
+     |--------------------------------------------------------------------------
+     | Expiration Minutes
+     |--------------------------------------------------------------------------
+     |
+     | This value controls the number of minutes until an issued token will be
+     | considered expired. This will override any values set in the token's
+     | "expires_at" attribute, but first-party sessions are not affected.
+     |
+     | Set to null to use the expires_at attribute from the token.
+     | Access tokens: 60 minutes (1 hour)
+     | Refresh tokens: 10080 minutes (7 days)
+     |
+     */
 
-    'expiration' => null,
+    'expiration' => env('SANCTUM_TOKEN_EXPIRATION', 60), // Default 60 minutes untuk access token
 
     /*
     |--------------------------------------------------------------------------
