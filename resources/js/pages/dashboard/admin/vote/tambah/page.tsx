@@ -71,6 +71,15 @@ export default function TambahPaslonPage() {
             return;
         }
 
+        // Validasi konfirmasi password di sisi frontend
+        if (formData.password !== formData.password_confirmation) {
+            setErrors({
+                password_confirmation: "Konfirmasi password tidak sama dengan password",
+            });
+            setProcessing(false);
+            return;
+        }
+
         try {
             // Membuat FormData untuk mengirim file
             const submitData = new FormData();

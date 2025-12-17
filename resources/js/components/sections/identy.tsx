@@ -53,21 +53,21 @@ export default function Identity() {
                                 Aisha Dwi Rahmawati
                             </p>
                             <p className="text-lg md:text-3xl text-slate-600 font-medium">
-                                Clarista
+                                Clarista Felisya W 
                             </p>
                             {/* Duplicate set 2 */}
                             <p className="text-lg md:text-3xl text-slate-600 font-medium">
                                 Aisha Dwi Rahmawati
                             </p>
                             <p className="text-lg md:text-3xl text-slate-600 font-medium">
-                                Clarista
+                                Clarista Felisya W 
                             </p>
                             {/* Duplicate set 3 */}
                             <p className="text-lg md:text-3xl text-slate-600 font-medium">
                                 Aisha Dwi Rahmawati
                             </p>
                             <p className="text-lg md:text-3xl text-slate-600 font-medium">
-                                Clarista
+                                Clarista Felisya W 
                             </p>
                         </div>
                     </div>
