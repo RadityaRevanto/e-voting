@@ -29,6 +29,7 @@ interface FormErrors {
     username?: string;
     email?: string;
     password?: string;
+    password_confirmation?: string;
 }
 
 export default function TambahPaslonPage() {
@@ -42,6 +43,7 @@ export default function TambahPaslonPage() {
         username: "",
         email: "",
         password: "",
+        password_confirmation: "",
     });
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -61,6 +63,15 @@ export default function TambahPaslonPage() {
             return;
         }
 
+        // Validasi konfirmasi password di sisi frontend
+        if (formData.password !== formData.password_confirmation) {
+            setErrors({
+                password_confirmation: "Konfirmasi password tidak sama dengan password",
+            });
+            setProcessing(false);
+            return;
+        }
+
         try {
             // Membuat FormData untuk mengirim file
             const submitData = new FormData();
@@ -73,6 +84,7 @@ export default function TambahPaslonPage() {
             submitData.append("username", formData.username);
             submitData.append("email", formData.email);
             submitData.append("password", formData.password);
+            submitData.append("password_confirmation", formData.password_confirmation);
             submitData.append("image", imageFile);
 
             // TODO: Ganti dengan endpoint API yang sesuai
@@ -452,6 +464,37 @@ export default function TambahPaslonPage() {
                                                     Password minimal 8 karakter
                                                 </p>
                                             )}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label
+                                                htmlFor="password_confirmation"
+                                                className="text-base sm:text-lg md:text-xl font-semibold text-[#53589a]"
+                                            >
+                                                Konfirmasi Password <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Input
+                                                id="password_confirmation"
+                                                name="password_confirmation"
+                                                type="password"
+                                                value={formData.password_confirmation}
+                                                onChange={handleChange}
+                                                placeholder="Ulangi password untuk akun paslon"
+                                                required
+                                                className={`h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg focus-visible:ring-0 ${
+                                                    formData.password_confirmation.length === 0 ||
+                                                    formData.password_confirmation !== formData.password
+                                                        ? "focus-visible:border-red-500"
+                                                        : ""
+                                                }`}
+                                            />
+                                            <InputError message={errors.password_confirmation} />
+                                            {formData.password_confirmation.length > 0 &&
+                                                formData.password_confirmation !== formData.password && (
+                                                    <p className="text-xs sm:text-sm md:text-base text-gray-500">
+                                                        Konfirmasi password harus sama dengan password
+                                                    </p>
+                                                )}
                                         </div>
 
                                         {/* Tombol Submit dan Batal - diletakkan di bawah Card Informasi Akun Paslon */}
