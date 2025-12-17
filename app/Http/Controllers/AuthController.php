@@ -169,18 +169,58 @@ class AuthController extends Controller
             // Dapatkan user dari token
             $user = $token->tokenable;
 
-            // Hapus access token lama yang sudah expired
-            $user->tokens()
-                ->where('abilities', 'like', '%access-token%')
-                ->where('expires_at', '<', now())
-                ->delete();
+            // Validasi user masih ada dan aktif
+            if (!$user) {
+                $token->delete();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User tidak ditemukan',
+                    'data' => [],
+                ], 401);
+            }
 
-            // Buat access token baru
+            // Validasi user masih memiliki role yang valid
+            if (!in_array($user->role, ['admin', 'super_admin', 'paslon'])) {
+                $token->delete();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User tidak memiliki akses',
+                    'data' => [],
+                ], 403);
+            }
+
+            // Dapatkan informasi device dari refresh token untuk konsistensi
+            $deviceInfo = $request->header('User-Agent', 'Unknown');
+            $ipAddress = $request->ip();
+
+            // Parse device name dari token name (format: refresh-token-DeviceName-IPAddress)
+            $nameParts = explode('-', $token->name, 4);
+            $deviceName = isset($nameParts[2]) ? $nameParts[2] : $deviceInfo;
+
+            // Hapus access token lama yang sudah expired
+            // Menggunakan filter collection karena abilities adalah JSON
+            $expiredAccessTokens = $user->tokens()
+                ->where('expires_at', '<', now())
+                ->get()
+                ->filter(function ($t) {
+                    return in_array('access-token', $t->abilities ?? []);
+                });
+
+            foreach ($expiredAccessTokens as $expiredToken) {
+                $expiredToken->delete();
+            }
+
+            // Buat access token baru dengan device info yang konsisten
             $accessToken = $user->createToken(
-                'access-token',
+                'access-token-' . $deviceName,
                 ['access-token'],
                 Carbon::now()->addHours(1)
             );
+
+            // Simpan metadata device ke token (melalui name)
+            $accessToken->accessToken->update([
+                'name' => 'access-token-' . $deviceName . '-' . $ipAddress
+            ]);
 
             return response()->json([
                 'success' => true,

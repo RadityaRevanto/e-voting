@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Paslon;
+use App\Models\User;
+use App\Helpers\HttpStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
 
 class PaslonController extends Controller
 {
@@ -25,10 +29,22 @@ class PaslonController extends Controller
             'misi' => 'nullable|string'
         ]);
 
-        if ($validator->fails()) return HttpStatus::code422($validator->errors());
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
         if ($request->password != $request->confirm_password) {
-            return HttpStatus::code422('Confirm password harus sama dengan password');
+            return response()->json([
+                'success' => false,
+                'message' => 'Confirm password harus sama dengan password',
+                'errors' => [
+                    'confirm_password' => ['Confirm password harus sama dengan password']
+                ],
+            ], 422);
         }
 
         try {
@@ -119,7 +135,13 @@ class PaslonController extends Controller
             'misi' => 'nullable|string'
         ]);
 
-        if ($validator->fails()) return HttpStatus::code422($validator->errors());
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
         try {
             // Ambil user yang sedang login
