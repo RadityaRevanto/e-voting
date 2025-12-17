@@ -10,6 +10,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import InputError from "@/pages/dashboard/_components/input-error";
 import { Head } from "@inertiajs/react";
 import { AlertCircle } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Candidate {
     id: number;
@@ -19,44 +21,52 @@ interface Candidate {
 }
 
 interface FormErrors {
-    ketua_nama?: string;
-    ketua_umur?: string;
-    ketua_jurusan?: string;
-    wakil_nama?: string;
-    wakil_umur?: string;
-    wakil_jurusan?: string;
-    image?: string;
+    nama_ketua?: string;
+    umur_ketua?: string;
+    jurusan_ketua?: string;
+    nama_wakil_ketua?: string;
+    umur_wakil_ketua?: string;
+    jurusan_wakil_ketua?: string;
+    foto_paslon?: string;
     username?: string;
     email?: string;
     password?: string;
+    confirm_password?: string;
+    visi?: string;
+    misi?: string;
 }
 
 export default function TambahPaslonPage() {
     const [formData, setFormData] = useState({
-        ketua_nama: "",
-        ketua_umur: "",
-        ketua_jurusan: "",
-        wakil_nama: "",
-        wakil_umur: "",
-        wakil_jurusan: "",
+        nama_ketua: "",
+        umur_ketua: "",
+        jurusan_ketua: "",
+        nama_wakil_ketua: "",
+        umur_wakil_ketua: "",
+        jurusan_wakil_ketua: "",
         username: "",
         email: "",
         password: "",
+        confirm_password: "",
+        visi: "",
+        misi: "",
     });
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [errors, setErrors] = useState<FormErrors>({});
     const [processing, setProcessing] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setProcessing(true);
         setErrors({});
+        setSuccessMessage(null);
 
-        // Validasi file gambar
-        if (!imageFile) {
-            setErrors({ image: "Foto paslon wajib diunggah" });
+        // Validasi password match
+        if (formData.password !== formData.confirm_password) {
+            setErrors({ confirm_password: "Password dan konfirmasi password tidak sama" });
             setProcessing(false);
             return;
         }
@@ -64,38 +74,80 @@ export default function TambahPaslonPage() {
         try {
             // Membuat FormData untuk mengirim file
             const submitData = new FormData();
-            submitData.append("ketua_nama", formData.ketua_nama);
-            submitData.append("ketua_umur", formData.ketua_umur);
-            submitData.append("ketua_jurusan", formData.ketua_jurusan);
-            submitData.append("wakil_nama", formData.wakil_nama);
-            submitData.append("wakil_umur", formData.wakil_umur);
-            submitData.append("wakil_jurusan", formData.wakil_jurusan);
             submitData.append("username", formData.username);
             submitData.append("email", formData.email);
             submitData.append("password", formData.password);
-            submitData.append("image", imageFile);
+            submitData.append("confirm_password", formData.confirm_password);
+            submitData.append("nama_ketua", formData.nama_ketua);
+            submitData.append("umur_ketua", formData.umur_ketua || "");
+            submitData.append("jurusan_ketua", formData.jurusan_ketua || "");
+            submitData.append("nama_wakil_ketua", formData.nama_wakil_ketua);
+            submitData.append("umur_wakil_ketua", formData.umur_wakil_ketua || "");
+            submitData.append("jurusan_wakil_ketua", formData.jurusan_wakil_ketua || "");
+            submitData.append("visi", formData.visi || "");
+            submitData.append("misi", formData.misi || "");
 
-            // TODO: Ganti dengan endpoint API yang sesuai
-            const response = await fetch("/api/candidates", {
+            if (imageFile) {
+                submitData.append("foto_paslon", imageFile);
+            }
+
+            // Menggunakan apiClient untuk handle authentication dan refresh token otomatis
+            const response = await apiClient.fetch("/api/admin/paslon/register", {
                 method: "POST",
-                headers: {
-                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "",
-                },
                 body: submitData,
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                const errorData = await response.json();
-                setErrors(errorData.errors || {});
+                // Handle validation errors
+                if (data.errors) {
+                    const formattedErrors: FormErrors = {};
+                    Object.keys(data.errors).forEach((key) => {
+                        formattedErrors[key as keyof FormErrors] = Array.isArray(data.errors[key])
+                            ? data.errors[key][0]
+                            : data.errors[key];
+                    });
+                    setErrors(formattedErrors);
+                } else {
+                    setErrors({ nama_ketua: data.message || "Terjadi kesalahan saat menambahkan paslon" });
+                }
                 setProcessing(false);
                 return;
             }
 
-            // Redirect ke halaman vote setelah berhasil
-            router.visit("/admin/vote");
+            if (data.success) {
+                setSuccessMessage(data.message || "Paslon berhasil didaftarkan");
+                // Reset form
+                setFormData({
+                    nama_ketua: "",
+                    umur_ketua: "",
+                    jurusan_ketua: "",
+                    nama_wakil_ketua: "",
+                    umur_wakil_ketua: "",
+                    jurusan_wakil_ketua: "",
+                    username: "",
+                    email: "",
+                    password: "",
+                    confirm_password: "",
+                    visi: "",
+                    misi: "",
+                });
+                setImageFile(null);
+                setImagePreview(null);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                }
+
+                // Redirect ke halaman vote setelah 2 detik
+                setTimeout(() => {
+                    router.visit("/admin/vote");
+                }, 2000);
+            }
         } catch (error) {
             console.error("Error:", error);
-            setErrors({ ketua_nama: "Terjadi kesalahan saat menambahkan paslon" });
+            setErrors({ nama_ketua: "Terjadi kesalahan saat menambahkan paslon. Silakan coba lagi." });
+        } finally {
             setProcessing(false);
         }
     };
@@ -112,19 +164,20 @@ export default function TambahPaslonPage() {
         const file = e.target.files?.[0];
         if (file) {
             // Validasi tipe file
-            if (!file.type.startsWith("image/")) {
-                setErrors({ image: "File harus berupa gambar" });
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                setErrors({ foto_paslon: "File harus berupa gambar (JPG, PNG, GIF)" });
                 return;
             }
 
-            // Validasi ukuran file (max 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                setErrors({ image: "Ukuran file maksimal 5MB" });
+            // Validasi ukuran file (max 2MB sesuai API)
+            if (file.size > 2 * 1024 * 1024) {
+                setErrors({ foto_paslon: "Ukuran file maksimal 2MB" });
                 return;
             }
 
             setImageFile(file);
-            setErrors((prev) => ({ ...prev, image: undefined }));
+            setErrors((prev) => ({ ...prev, foto_paslon: undefined }));
 
             // Membuat preview gambar
             const reader = new FileReader();
@@ -154,8 +207,8 @@ export default function TambahPaslonPage() {
                                 TAMBAH PASLON
                             </h1>
                             <Link href="/admin/vote" className="w-full sm:w-auto">
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     size="default"
                                     className="w-full sm:w-auto text-sm sm:text-base md:size-lg"
                                 >
@@ -167,6 +220,13 @@ export default function TambahPaslonPage() {
                     </header>
 
                     <main>
+                        {successMessage && (
+                            <Alert className="mb-4 bg-green-50 border-green-200">
+                                <AlertDescription className="text-green-800">
+                                    {successMessage}
+                                </AlertDescription>
+                            </Alert>
+                        )}
                         {Object.keys(errors).length > 0 && (
                             <Alert variant="destructive" className="mb-4">
                                 <AlertCircle className="h-4 w-4" />
@@ -192,69 +252,65 @@ export default function TambahPaslonPage() {
                                             </p>
                                             <div className="space-y-2">
                                                 <Label
-                                                    htmlFor="ketua_nama"
+                                                    htmlFor="nama_ketua"
                                                     className="text-base sm:text-lg md:text-xl font-semibold text-[#53589a]"
                                                 >
                                                     Nama Ketua <span className="text-red-500">*</span>
                                                 </Label>
                                                 <Input
-                                                    id="ketua_nama"
-                                                    name="ketua_nama"
+                                                    id="nama_ketua"
+                                                    name="nama_ketua"
                                                     type="text"
-                                                    value={formData.ketua_nama}
+                                                    value={formData.nama_ketua}
                                                     onChange={handleChange}
                                                     placeholder="Masukkan nama ketua"
                                                     required
                                                     className={`h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg focus-visible:ring-0 ${
-                                                        !formData.ketua_nama ? "focus-visible:border-red-500" : ""
+                                                        !formData.nama_ketua ? "focus-visible:border-red-500" : ""
                                                     }`}
                                                 />
-                                                <InputError message={errors.ketua_nama} />
+                                                <InputError message={errors.nama_ketua} />
                                             </div>
 
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <div className="space-y-2">
                                                     <Label
-                                                        htmlFor="ketua_umur"
+                                                        htmlFor="umur_ketua"
                                                         className="text-base sm:text-lg md:text-xl font-semibold text-[#53589a]"
                                                     >
-                                                        Umur Ketua <span className="text-red-500">*</span>
+                                                        Umur Ketua
                                                     </Label>
                                                     <Input
-                                                        id="ketua_umur"
-                                                        name="ketua_umur"
+                                                        id="umur_ketua"
+                                                        name="umur_ketua"
                                                         type="number"
                                                         value={formData.ketua_umur}
                                                         onChange={handleChange}
                                                         placeholder="Umur"
-                                                        required
-                                                        className={`h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg focus-visible:ring-0 ${
-                                                            !formData.ketua_umur ? "focus-visible:border-red-500" : ""
-                                                        }`}
+                                                        min="1"
+                                                        max="100"
+                                                        className="h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg focus-visible:ring-0"
                                                     />
-                                                    <InputError message={errors.ketua_umur} />
+                                                    <InputError message={errors.umur_ketua} />
                                                 </div>
 
                                                 <div className="space-y-2">
                                                     <Label
-                                                        htmlFor="ketua_jurusan"
+                                                        htmlFor="jurusan_ketua"
                                                         className="text-base sm:text-lg md:text-xl font-semibold text-[#53589a]"
                                                     >
-                                                        Jurusan Ketua <span className="text-red-500">*</span>
+                                                        Jurusan Ketua
                                                     </Label>
                                                     <Input
-                                                        id="ketua_jurusan"
-                                                        name="ketua_jurusan"
+                                                        id="jurusan_ketua"
+                                                        name="jurusan_ketua"
                                                         type="text"
                                                         value={formData.ketua_jurusan}
                                                         onChange={handleChange}
                                                         placeholder="Masukkan jurusan ketua"
-                                                        required
-                                                        className={`h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg focus-visible:ring-0 ${
-                                                            !formData.ketua_jurusan ? "focus-visible:border-red-500" : ""
-                                                        }`}
+                                                        className="h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg focus-visible:ring-0"
                                                     />
-                                                    <InputError message={errors.ketua_jurusan} />
+                                                    <InputError message={errors.jurusan_ketua} />
                                                 </div>
                                             </div>
                                         </div>
@@ -268,67 +324,63 @@ export default function TambahPaslonPage() {
                                             </p>
                                             <div className="space-y-2">
                                                 <Label
-                                                    htmlFor="wakil_nama"
+                                                    htmlFor="nama_wakil_ketua"
                                                     className="text-base sm:text-lg md:text-xl font-semibold text-[#53589a]"
                                                 >
-                                                    Nama Wakil <span className="text-red-500">*</span>
+                                                    Nama Wakil Ketua <span className="text-red-500">*</span>
                                                 </Label>
                                                 <Input
-                                                    id="wakil_nama"
-                                                    name="wakil_nama"
+                                                    id="nama_wakil_ketua"
+                                                    name="nama_wakil_ketua"
                                                     type="text"
                                                     value={formData.wakil_nama}
                                                     onChange={handleChange}
                                                     placeholder="Masukkan nama wakil"
                                                     required
                                                     className={`h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg focus-visible:ring-0 ${
-                                                        !formData.wakil_nama ? "focus-visible:border-red-500" : ""
+                                                        !formData.nama_wakil_ketua ? "focus-visible:border-red-500" : ""
                                                     }`}
                                                 />
-                                                <InputError message={errors.wakil_nama} />
+                                                    <InputError message={errors.nama_wakil_ketua} />
                                             </div>
 
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <div className="space-y-2">
                                                     <Label
-                                                        htmlFor="wakil_umur"
+                                                        htmlFor="umur_wakil_ketua"
                                                         className="text-base sm:text-lg md:text-xl font-semibold text-[#53589a]"
                                                     >
-                                                        Umur Wakil <span className="text-red-500">*</span>
+                                                        Umur Wakil Ketua
                                                     </Label>
                                                     <Input
-                                                        id="wakil_umur"
-                                                        name="wakil_umur"
+                                                        id="umur_wakil_ketua"
+                                                        name="umur_wakil_ketua"
                                                         type="number"
                                                         value={formData.wakil_umur}
                                                         onChange={handleChange}
                                                         placeholder="Umur"
-                                                        required
-                                                        className={`h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg focus-visible:ring-0 ${
-                                                            !formData.wakil_umur ? "focus-visible:border-red-500" : ""
-                                                        }`}
+                                                        min="1"
+                                                        max="100"
+                                                        className="h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg focus-visible:ring-0"
                                                     />
-                                                    <InputError message={errors.wakil_umur} />
+                                                    <InputError message={errors.umur_wakil_ketua} />
                                                 </div>
 
                                                 <div className="space-y-2">
                                                     <Label
-                                                        htmlFor="wakil_jurusan"
+                                                        htmlFor="jurusan_wakil_ketua"
                                                         className="text-base sm:text-lg md:text-xl font-semibold text-[#53589a]"
                                                     >
-                                                        Jurusan Wakil <span className="text-red-500">*</span>
+                                                        Jurusan Wakil Ketua
                                                     </Label>
                                                     <Input
-                                                        id="wakil_jurusan"
-                                                        name="wakil_jurusan"
+                                                        id="jurusan_wakil_ketua"
+                                                        name="jurusan_wakil_ketua"
                                                         type="text"
                                                         value={formData.wakil_jurusan}
                                                         onChange={handleChange}
                                                         placeholder="Masukkan jurusan wakil"
-                                                        required
-                                                        className={`h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg focus-visible:ring-0 ${
-                                                            !formData.wakil_jurusan ? "focus-visible:border-red-500" : ""
-                                                        }`}
+                                                        className="h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg focus-visible:ring-0"
                                                     />
                                                     <InputError message={errors.wakil_jurusan} />
                                                 </div>
@@ -336,8 +388,8 @@ export default function TambahPaslonPage() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="image" className="text-base sm:text-lg md:text-xl font-semibold text-[#53589a]">
-                                                Foto Paslon <span className="text-red-500">*</span>
+                                            <Label htmlFor="foto_paslon" className="text-base sm:text-lg md:text-xl font-semibold text-[#53589a]">
+                                                Foto Paslon
                                             </Label>
                                             {imagePreview ? (
                                                 <div className="space-y-3">
@@ -362,23 +414,52 @@ export default function TambahPaslonPage() {
                                                 <div className="space-y-2">
                                                     <Input
                                                         ref={fileInputRef}
-                                                        id="image"
-                                                        name="image"
+                                                        id="foto_paslon"
+                                                        name="foto_paslon"
                                                         type="file"
-                                                        accept="image/*"
+                                                        accept="image/jpeg,image/png,image/jpg,image/gif"
                                                         onChange={handleImageChange}
-                                                        required
-                                                        className={`h-10 sm:h-12 md:h-14 text-xs sm:text-sm md:text-lg cursor-pointer focus-visible:ring-0 ${
-                                                            !imageFile ? "focus-visible:border-red-500" : ""
-                                                        }`}
+                                                        className="h-10 sm:h-12 md:h-14 text-xs sm:text-sm md:text-lg cursor-pointer focus-visible:ring-0"
                                                     />
                                                     <p className="text-xs sm:text-sm md:text-base text-gray-500">
-                                                        Pilih file gambar (JPG, PNG, maksimal 5MB)
+                                                        Pilih file gambar (JPG, PNG, GIF, maksimal 2MB)
                                                     </p>
                                                 </div>
                                             )}
-                                            <InputError message={errors.image} />
+                                            <InputError message={errors.foto_paslon} />
                                         </div>
+
+                                        {/* <div className="space-y-2">
+                                            <Label htmlFor="visi" className="text-base sm:text-lg md:text-xl font-semibold text-[#53589a]">
+                                                Visi
+                                            </Label>
+                                            <Textarea
+                                                id="visi"
+                                                name="visi"
+                                                value={formData.visi}
+                                                onChange={(e) => setFormData({ ...formData, visi: e.target.value })}
+                                                placeholder="Masukkan visi paslon"
+                                                rows={4}
+                                                className="text-sm sm:text-base md:text-lg focus-visible:ring-0"
+                                            />
+                                            <InputError message={errors.visi} />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="misi" className="text-base sm:text-lg md:text-xl font-semibold text-[#53589a]">
+                                                Misi
+                                            </Label>
+                                            <Textarea
+                                                id="misi"
+                                                name="misi"
+                                                value={formData.misi}
+                                                onChange={(e) => setFormData({ ...formData, misi: e.target.value })}
+                                                placeholder="Masukkan misi paslon"
+                                                rows={4}
+                                                className="text-sm sm:text-base md:text-lg focus-visible:ring-0"
+                                            />
+                                            <InputError message={errors.misi} />
+                                        </div> */}
                                     </CardContent>
                                 </Card>
 
@@ -450,6 +531,34 @@ export default function TambahPaslonPage() {
                                             {formData.password.length > 0 && formData.password.length < 8 && (
                                                 <p className="text-xs sm:text-sm md:text-base text-gray-500">
                                                     Password minimal 8 karakter
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="confirm_password" className="text-base sm:text-lg md:text-xl font-semibold text-[#53589a]">
+                                                Konfirmasi Password <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Input
+                                                id="confirm_password"
+                                                name="confirm_password"
+                                                type="password"
+                                                value={formData.confirm_password}
+                                                onChange={handleChange}
+                                                placeholder="Konfirmasi password"
+                                                required
+                                                className={`h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg focus-visible:ring-0 ${
+                                                    formData.confirm_password.length === 0
+                                                        ? "focus-visible:border-red-500"
+                                                        : formData.password !== formData.confirm_password
+                                                        ? "border-red-500"
+                                                        : ""
+                                                }`}
+                                            />
+                                            <InputError message={errors.confirm_password} />
+                                            {formData.confirm_password.length > 0 && formData.password !== formData.confirm_password && (
+                                                <p className="text-xs sm:text-sm md:text-base text-red-500">
+                                                    Password dan konfirmasi password tidak sama
                                                 </p>
                                             )}
                                         </div>
