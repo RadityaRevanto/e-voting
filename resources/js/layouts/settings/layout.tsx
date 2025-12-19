@@ -1,4 +1,4 @@
-import Heading from '@/components/heading';
+import Heading from '@/pages/dashboard/_components/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn, isSameUrl, resolveUrl } from '@/lib/utils';
