@@ -71,15 +71,6 @@ export default function TambahPaslonPage() {
             return;
         }
 
-        // Validasi konfirmasi password di sisi frontend
-        if (formData.password !== formData.password_confirmation) {
-            setErrors({
-                password_confirmation: "Konfirmasi password tidak sama dengan password",
-            });
-            setProcessing(false);
-            return;
-        }
-
         try {
             // Membuat FormData untuk mengirim file
             const submitData = new FormData();
@@ -293,7 +284,7 @@ export default function TambahPaslonPage() {
                                                         id="umur_ketua"
                                                         name="umur_ketua"
                                                         type="number"
-                                                        value={formData.ketua_umur}
+                                                        value={formData.umur_ketua}
                                                         onChange={handleChange}
                                                         placeholder="Umur"
                                                         min="1"
@@ -314,7 +305,7 @@ export default function TambahPaslonPage() {
                                                         id="jurusan_ketua"
                                                         name="jurusan_ketua"
                                                         type="text"
-                                                        value={formData.ketua_jurusan}
+                                                        value={formData.jurusan_ketua}
                                                         onChange={handleChange}
                                                         placeholder="Masukkan jurusan ketua"
                                                         className="h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg focus-visible:ring-0"
@@ -342,7 +333,7 @@ export default function TambahPaslonPage() {
                                                     id="nama_wakil_ketua"
                                                     name="nama_wakil_ketua"
                                                     type="text"
-                                                    value={formData.wakil_nama}
+                                                    value={formData.nama_wakil_ketua}
                                                     onChange={handleChange}
                                                     placeholder="Masukkan nama wakil"
                                                     required
@@ -365,7 +356,7 @@ export default function TambahPaslonPage() {
                                                         id="umur_wakil_ketua"
                                                         name="umur_wakil_ketua"
                                                         type="number"
-                                                        value={formData.wakil_umur}
+                                                        value={formData.umur_wakil_ketua}
                                                         onChange={handleChange}
                                                         placeholder="Umur"
                                                         min="1"
@@ -386,12 +377,12 @@ export default function TambahPaslonPage() {
                                                         id="jurusan_wakil_ketua"
                                                         name="jurusan_wakil_ketua"
                                                         type="text"
-                                                        value={formData.wakil_jurusan}
+                                                        value={formData.jurusan_wakil_ketua}
                                                         onChange={handleChange}
                                                         placeholder="Masukkan jurusan wakil"
                                                         className="h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg focus-visible:ring-0"
                                                     />
-                                                    <InputError message={errors.wakil_jurusan} />
+                                                    <InputError message={errors.jurusan_wakil_ketua} />
                                                 </div>
                                             </div>
                                         </div>
