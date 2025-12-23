@@ -31,7 +31,7 @@ class VoteController extends Controller
                 'paslon_id' => $request->paslon_id,
             ]);
         } catch (\Throwable $th) {
-            return HttpStatus::code409('NIK sudah ada');
+            return HttpStatus::code409('NIK sudah ada atau Paslon tidak ditemukan');
         }
 
         // Hashing Vote
@@ -75,6 +75,12 @@ class VoteController extends Controller
             $paslonVoteMapping['paslon'.$vote->paslon_id]++;
         }
 
+        // Vote precentage each paslon
+        for ($i = 1; $i <= Paslon::count(); $i++) { 
+            $paslonVoteMapping['paslon'.$i.'_precentage'] = round(($paslonVoteMapping['paslon'.$i] / Vote::count()) * 100, 2)."%";
+        }
+        $paslonVoteMapping['kecurangan_precentage'] = round(($paslonVoteMapping['kecurangan'] / Vote::count()) * 100, 2)."%";
+
         return response()->json([
             'success' => true,
             'message' => "Data vote",
@@ -90,8 +96,8 @@ class VoteController extends Controller
             'success' => true,
             'message' => "Data vote",
             'data' => [
-                'vilagerTotal' => $vilagerAmount,
-                'voteTotal' => $voteAmount,
+                'vilager_total' => $vilagerAmount,
+                'vote_total' => $voteAmount,
                 'golput' => $vilagerAmount - $voteAmount,
             ],
         ], 200);
