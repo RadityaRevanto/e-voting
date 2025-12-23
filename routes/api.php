@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PaslonController;
 use App\Http\Controllers\VoteController;
@@ -42,6 +43,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         Route::get('/sessions', [AuthController::class, 'getActiveSessions']);
         Route::delete('/sessions/{tokenId}', [AuthController::class, 'revokeSession']);
+    });
+
+    Route::middleware('role:super_admin')->prefix('superadmin')->group(function () {
+        Route::delete('/vote/clear', [VoteController::class, 'clearVotesData']);
+        Route::get('/activity-logs', [ActivityLogController::class, 'index']);
     });
 
     // Admin only
