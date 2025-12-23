@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('session');
             $table->text('info');
             $table->string('context', 20);
-            $table->enum('subject', ['superadmin', 'admin', 'paslon', 'user']);
+            $table->enum('subject', ['superadmin', 'admin', 'paslon', 'voter']);
             $table->timestamp('created_at');
         });
     }

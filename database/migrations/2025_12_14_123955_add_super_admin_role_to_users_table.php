@@ -61,19 +61,19 @@ return new class extends Migration
     // }
     public function down(): void
     {
-        // 1️⃣ Drop constraint
+        // 1️⃣ Drop constraint baru
         DB::statement("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
 
-        // 2️⃣ Normalisasi data
+        // 2️⃣ Kembalikan super_admin menjadi admin
         DB::table('users')
             ->where('role', 'super_admin')
             ->update(['role' => 'admin']);
 
-        // 3️⃣ Pasang constraint lama
+        // 3️⃣ Pasang kembali constraint lama
         DB::statement("
             ALTER TABLE users
             ADD CONSTRAINT users_role_check
-            CHECK (role IN ('admin', 'paslon'))
+            CHECK (role IN ('admin', 'paslon', 'voter'))
         ");
     }
 
