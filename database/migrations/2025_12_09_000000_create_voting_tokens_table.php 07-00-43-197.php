@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('voting_tokens', function (Blueprint $table) {
             $table->string('token', 255)->primary();
-            $table->string('warga_nik', 16);
+            $table->string('warga_nik', 64);
             $table->string('nonce', 255);
             $table->string('signature', 255);
             $table->timestamp('expires_at');

@@ -30,7 +30,7 @@ class AuthController extends Controller
         try {
             // Hanya admin dan super_admin yang bisa login
             $user = User::where('email', $request->email)
-                ->whereIn('role', ['admin', 'super_admin', 'paslon'])
+                ->whereIn('role', ['admin', 'super_admin', 'paslon', 'voter'])
                 ->first();
 
             // Dapatkan informasi device untuk tracking (sebelum validasi)

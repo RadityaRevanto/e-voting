@@ -52,6 +52,15 @@ class DatabaseSeeder extends Seeder
                 'role' => 'paslon',
             ]
         );
+        
+        User::updateOrCreate(
+            ['email' => 'voter1@evoting.com'],
+            [
+                'name' => 'Komputer 1',
+                'password' => Hash::make('voter123'),
+                'role' => 'voter',
+            ]
+        );
 
         // Create paslon
         Paslon::create([
@@ -76,13 +85,13 @@ class DatabaseSeeder extends Seeder
 
         // Create warga (updateOrCreate untuk menghindari duplicate)
         Warga::firstOrCreate([
-            'nik' => 'cb46aa542611fd3d74fdf5f41bef87b955028c4fd3fbf2bbe7d04410fdb6503b'
+            'nik' => hash('sha256', '3201234567890001')
         ]);
         Warga::firstOrCreate([
-            'nik' => 'af3cb1b8d80ad898d542685c1850ceb15dfca12420a7d0a8d31e57b7db501fad'
+            'nik' => hash('sha256', '3201234567890002')
         ]);
         Warga::firstOrCreate([
-            'nik' => '3201234567890213'
+            'nik' => hash('sha256', '3201234567890003')
         ]);
     }
 }

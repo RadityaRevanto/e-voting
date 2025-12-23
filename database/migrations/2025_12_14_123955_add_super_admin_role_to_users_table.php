@@ -29,7 +29,7 @@ return new class extends Migration
 
         // 2️⃣ Normalisasi data lama (WAJIB)
         DB::table('users')
-            ->whereNotIn('role', ['admin', 'paslon', 'super_admin'])
+            ->whereNotIn('role', ['admin', 'paslon', 'voter', 'super_admin'])
             ->update(['role' => 'admin']);
 
         // 3️⃣ Update user tertentu
@@ -41,7 +41,7 @@ return new class extends Migration
         DB::statement("
             ALTER TABLE users
             ADD CONSTRAINT users_role_check
-            CHECK (role IN ('admin', 'super_admin', 'paslon'))
+            CHECK (role IN ('admin', 'super_admin', 'paslon', 'voter'))
         ");
     }
 
