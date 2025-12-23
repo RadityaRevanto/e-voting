@@ -33,7 +33,7 @@ class QRCodeController extends Controller
             $expirationMinutes = $request->input('expiration_minutes', 10);
 
             $result = $this->qrCodeService->generateSecureQRCode(
-                $request->warga_nik,
+                hash('sha256', $request->warga_nik),
                 $expirationMinutes
             );
 
