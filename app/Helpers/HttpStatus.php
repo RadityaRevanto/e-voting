@@ -12,6 +12,14 @@ class HttpStatus
         ], 400);
     }
     
+    public static function code403 (String $message = "Forbidden"){
+        return response()->json([
+            'success' => false,
+            'message' => $message,
+            'data' => [],
+        ], 403);
+    }
+    
     public static function code404 (String $message = "Not found"){
         return response()->json([
             'success' => false,

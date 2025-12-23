@@ -28,19 +28,6 @@ Route::prefix('vote-guidelines')->group(function () {
     Route::get('/', [VoteGuidelineController::class, 'shows']);
 });
 
-// Voting (warga, tanpa login)
-Route::prefix('vote')->group(function () {
-    Route::post('/create', [VoteController::class, 'create']);
-    Route::get('/voting-process', [VoteController::class, 'votingProcess']);
-});
-
-// QR Code (warga)
-Route::prefix('qr-codes')->group(function () {
-    Route::post('/validate', [QRCodeController::class, 'validate']);
-    Route::get('/status/{token}', [QRCodeController::class, 'status']);
-});
-
-
 /*
 |--------------------------------------------------------------------------
 | PROTECTED ROUTES (AUTH REQUIRED)
@@ -59,7 +46,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Admin only
     Route::middleware('role:admin')->prefix('admin')->group(function () {
-
         // Warga
         Route::post('/register-nik', [WargaController::class, 'registerNik']);
 
@@ -89,11 +75,25 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/login-logs', [AuthController::class, 'getLoginLogs']);
     });
 
-    // routes/api.php
     // Paslon only
     Route::middleware('role:paslon')->prefix('paslon')->group(function () {
         Route::get('/', [PaslonController::class, 'test']);
         Route::post('/update-visi-misi', [PaslonController::class, 'updateVisiMisi']);
+    });
+
+    // Voter only
+    Route::middleware('role:voter')->prefix('voter')->group(function () {
+        // Voting
+        Route::prefix('vote')->group(function () {
+            Route::post('/create', [VoteController::class, 'create']);
+            Route::get('/voting-process', [VoteController::class, 'votingProcess']);
+        });
+
+        // QR Code
+        Route::prefix('qr-codes')->group(function () {
+            Route::post('/validate', [QRCodeController::class, 'validate']);
+            Route::get('/status/{token}', [QRCodeController::class, 'status']);
+        });
     });
 
     // Current user
