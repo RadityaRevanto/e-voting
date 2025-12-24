@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\QRCode;
 use App\Models\VotingToken;
+use App\Models\Vote;
 use App\Models\Warga;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -30,6 +31,11 @@ class QRCodeService
         // Validate warga exists
         if (!Warga::where('nik', $wargaNik)->exists()) {
             throw new \Exception('NIK not found');
+        }
+
+        // Check if warga has already voted (1 KTP = 1 Vote)
+        if (Vote::where('warga_nik', $wargaNik)->exists()) {
+            throw new \Exception('Warga sudah pernah melakukan voting. Satu KTP hanya bisa vote sekali.');
         }
 
         // Check if warga already has an active token
@@ -150,9 +156,9 @@ class QRCodeService
             }
 
             // Verify token signature
-            $signatureData = $votingToken->token . '|' . $votingToken->warga_nik . '|' . 
+            $signatureData = $votingToken->token . '|' . $votingToken->warga_nik . '|' .
                            $votingToken->nonce . '|' . $votingToken->expires_at->toIso8601String();
-            
+
             if (!$this->cryptoService->verifyHMAC($signatureData, $votingToken->signature)) {
                 throw new \Exception('Token signature verification failed');
             }
@@ -187,7 +193,7 @@ class QRCodeService
 
         if ($votingToken) {
             $votingToken->markAsUsed();
-            
+
             // Mark QR code as scanned
             $qrCode = $votingToken->qrCode;
             if ($qrCode) {
