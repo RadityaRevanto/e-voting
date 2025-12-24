@@ -7,12 +7,13 @@ import {
   FileText,
   Sparkles,
   Settings2,
-  LogOut,
 } from "lucide-react"
-import { Link } from "@inertiajs/react"
+import { usePage } from "@inertiajs/react"
+import { isSameUrl } from "@/lib/utils"
 
 import { NavMain } from "@/pages/dashboard/_components/nav-main"
 import { NavUserProfile } from "@/pages/dashboard/_components/nav-user-profile"
+import { LogoutConfirmation } from "@/pages/dashboard/_components/logout-confirmation"
 import {
   Sidebar,
   SidebarContent,
@@ -24,44 +25,49 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-// This is sample data.
-const data = {
-  user: {
-    name: "Aditya Eka",
-    email: "aditya@example.com",
-    avatar: "/avatars/shadcn.jpg",
+const navItems = [
+  {
+    title: "Dashboard",
+    url: "/admin/dashboard",
+    icon: Home,
   },
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/admin/dashboard",
-      icon: Home,
-      isActive: true,
-    },
-    {
-      title: "Vote",
-      url: "#",
-      icon: CheckSquare,
-    },
-    {
-      title: "Vote Guideline",
-      url: "#",
-      icon: FileText,
-    },
-    {
-      title: "Generate",
-      url: "#",
-      icon: Sparkles,
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-    },
-  ],
+  {
+    title: "Vote",
+    url: "/admin/vote",
+    icon: CheckSquare,
+  },
+  {
+    title: "Vote Guideline",
+    url: "/admin/voteguideline",
+    icon: FileText,
+  },
+  {
+    title: "Generate",
+    url: "/admin/generate",
+    icon: Sparkles,
+  },
+  {
+    title: "Settings",
+    url: "/admin/settings",
+    icon: Settings2,
+  },
+]
+
+const userData = {
+  name: "Aditya Eka",
+  email: "aditya@example.com",
+  avatar: "/avatars/shadcn.jpg",
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const page = usePage()
+  const currentUrl = page.url
+
+  const navMain = navItems.map((item) => ({
+    ...item,
+    isActive: isSameUrl(currentUrl, item.url),
+  }))
+
   return (
     <Sidebar 
       collapsible="icon" 
@@ -70,10 +76,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {...props}
     >
       <SidebarHeader className="border-b-0">
-        <NavUserProfile user={data.user} />
+        <NavUserProfile user={userData} />
       </SidebarHeader>
       <SidebarContent className="px-2 group-data-[collapsible=icon]:px-1">
-        <NavMain items={data.navMain} />
+        <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter className="border-t-0 px-2 pb-4 group-data-[collapsible=icon]:px-1">
         <SidebarMenu>
@@ -81,12 +87,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton 
               asChild 
               tooltip="Log-Out"
-              className="group-data-[collapsible=icon]:justify-center"
+              className="group-data-[collapsible=icon]:justify-center rounded-2xl"
             >
-              <Link href="#" className="flex items-center gap-6 group-data-[collapsible=icon]:justify-center transition-colors duration-200 w-full">
-                <LogOut className="h-7 w-7 flex-shrink-0 text-[#53599b] peer-hover/menu-button:text-white transition-colors duration-200" />
-                <span className="group-data-[collapsible=icon]:hidden font-bold text-lg text-[#53599b] peer-hover/menu-button:text-white transition-colors duration-200">Log-Out</span>
-              </Link>
+              <LogoutConfirmation />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
