@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PaslonController;
 use App\Http\Controllers\VoteController;
@@ -44,6 +45,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/sessions/{tokenId}', [AuthController::class, 'revokeSession']);
     });
 
+    Route::middleware('role:super_admin')->prefix('superadmin')->group(function () {
+        Route::delete('/vote/clear', [VoteController::class, 'clearVotesData']);
+        Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+    });
+
+    Route::middleware('role:super_admin')->prefix('admin')->group(function () {
+        Route::post('/create', [AuthController::class, 'createAdmin']);
+    });
+
     // Admin only
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         // Warga
@@ -70,6 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Live Result
         Route::get('/vote/life-result', [VoteController::class, 'lifeResult']);
+        Route::get('/vote/voting-process', [VoteController::class, 'votingProcess']);
 
         // Monitoring login logs (untuk keamanan)
         Route::get('/login-logs', [AuthController::class, 'getLoginLogs']);
@@ -83,10 +94,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Voter only
     Route::middleware('role:voter')->prefix('voter')->group(function () {
+        // Paslon
+        Route::prefix('paslon')->group(function () {
+            Route::get('/', [PaslonController::class, 'index']);
+            Route::get('/{id}', [PaslonController::class, 'show']);
+        });
+
         // Voting
         Route::prefix('vote')->group(function () {
             Route::post('/create', [VoteController::class, 'create']);
-            Route::get('/voting-process', [VoteController::class, 'votingProcess']);
         });
 
         // QR Code

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\HttpStatus;
+use App\Helpers\ActivityLogHelper;
+use App\Models\ActivityLog;
 use App\Models\Paslon;
 use App\Models\RegisteredVote;
 use App\Models\Vote;
@@ -31,7 +33,7 @@ class VoteController extends Controller
                 'paslon_id' => $request->paslon_id,
             ]);
         } catch (\Throwable $th) {
-            return HttpStatus::code409('NIK sudah ada');
+            return HttpStatus::code409('NIK sudah ada atau Paslon tidak ditemukan');
         }
 
         // Hashing Vote
@@ -41,6 +43,11 @@ class VoteController extends Controller
             'hashed_vote' => $hashedVote
         ]);
 
+        ActivityLogHelper::createVoteLog(
+            $request->user()->email." : NIK ".$request->warga_nik." melakukan vote untuk Paslon ID ".$request->paslon_id,
+            $vote->created_at
+        );
+
         return response()->json([
             'success' => true,
             'message' => "Vote berhasil dibuat",
@@ -49,10 +56,12 @@ class VoteController extends Controller
     }
 
     public function lifeResult() {
+        $voteCount = Vote::count();
+        $registeredVoteCount = RegisteredVote::count();
         $votes = Vote::all();
         $paslonVoteMapping = [];
 
-        if (Vote::count() != RegisteredVote::count()) {
+        if ($voteCount != $registeredVoteCount) {
             return HttpStatus::code409('Manipulasi terdeteksi');
         }
 
@@ -75,6 +84,12 @@ class VoteController extends Controller
             $paslonVoteMapping['paslon'.$vote->paslon_id]++;
         }
 
+        // Vote precentage each paslon
+        for ($i = 1; $i <= Paslon::count(); $i++) { 
+            $paslonVoteMapping['paslon'.$i.'_precentage'] = ($voteCount > 0)? round(($paslonVoteMapping['paslon'.$i] / $voteCount) * 100, 2)."%" : "0%";
+        }
+        $paslonVoteMapping['kecurangan_precentage'] = ($voteCount > 0)? round(($paslonVoteMapping['kecurangan'] / $voteCount) * 100, 2)."%" : "0%";
+
         return response()->json([
             'success' => true,
             'message' => "Data vote",
@@ -90,10 +105,26 @@ class VoteController extends Controller
             'success' => true,
             'message' => "Data vote",
             'data' => [
-                'vilagerTotal' => $vilagerAmount,
-                'voteTotal' => $voteAmount,
+                'vilager_total' => $vilagerAmount,
+                'vote_total' => $voteAmount,
                 'golput' => $vilagerAmount - $voteAmount,
             ],
+        ], 200);
+    }
+
+    public function clearVotesData() {
+        Vote::truncate();
+        RegisteredVote::truncate();
+
+        ActivityLogHelper::createVoteLog(
+            "Data vote telah dihapus oleh admin",
+            now()
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "Data vote berhasil dihapus",
+            'data' => [],
         ], 200);
     }
 }
