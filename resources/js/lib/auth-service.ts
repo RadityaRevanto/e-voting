@@ -1,96 +1,98 @@
-import { authStorage } from './auth-storage';
-import { apiClient } from './api-client';
+import { apiFetch } from './api-client';
+import * as authStorage from './auth-storage';
 
-/**
- * Interface untuk response login
- */
-interface LoginResponse {
-    success: boolean;
-    message: string;
-    data: {
-        user: {
-            id: number;
-            name: string;
-            email: string;
-            role: string;
-        };
-        access_token: string;
-        refresh_token: string;
-        token_type: string;
-        expires_in: number;
-    };
+// Tipe untuk kredensial login
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+// Tipe untuk data user dari API
+export interface UserData {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+}
+
+// Tipe untuk response API standar
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+// Tipe untuk response login
+interface LoginResponseData {
+  user: UserData;
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
 }
 
 /**
- * Service untuk handle authentication
+ * Melakukan proses login dan menyimpan token
+ * @param credentials Kredensial login (email & password)
+ * @returns Data user yang berhasil login
+ * @throws Error jika login gagal
  */
-export const authService = {
-    /**
-     * Login dan simpan token ke storage
-     */
-    async login(email: string, password: string): Promise<LoginResponse> {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+export const login = async (
+  credentials: LoginCredentials,
+): Promise<UserData> => {
+  const response = await apiFetch('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(credentials),
+  });
 
-        const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-            },
-            body: JSON.stringify({
-                email,
-                password,
-            }),
-        });
+  const result: ApiResponse<LoginResponseData> = await response.json();
 
-        const data: LoginResponse = await response.json();
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || 'Login gagal');
+  }
 
-        if (data.success && data.data.access_token && data.data.refresh_token) {
-            // Simpan token ke storage
-            authStorage.setTokens(
-                data.data.access_token,
-                data.data.refresh_token,
-                data.data.expires_in
-            );
-        }
+  const { user, access_token, refresh_token, expires_in } = result.data;
 
-        return data;
-    },
+  // Simpan token ke storage
+  authStorage.setTokens(access_token, refresh_token, expires_in);
 
-    /**
-     * Logout dan hapus token dari storage
-     */
-    async logout(): Promise<void> {
-        try {
-            // Panggil API logout jika diperlukan
-            await apiClient.post('/api/auth/logout');
-        } catch (error) {
-            console.error('Error saat logout:', error);
-        } finally {
-            // Hapus token dari storage
-            authStorage.clearTokens();
-        }
-    },
-
-    /**
-     * Cek apakah user sudah login
-     */
-    isAuthenticated(): boolean {
-        return authStorage.isAuthenticated();
-    },
-
-    /**
-     * Ambil access token
-     */
-    getAccessToken(): string | null {
-        return authStorage.getAccessToken();
-    },
-
-    /**
-     * Ambil refresh token
-     */
-    getRefreshToken(): string | null {
-        return authStorage.getRefreshToken();
-    },
+  return user;
 };
+
+/**
+ * Melakukan proses logout dan menghapus token lokal
+ * Apapun hasil request logout, token lokal akan selalu dihapus
+ */
+export const logout = async (): Promise<void> => {
+  try {
+    // Coba kirim request logout ke backend
+    await apiFetch('/api/auth/logout', {
+      method: 'POST',
+    });
+  } catch (error) {
+    // Abaikan error dari request logout
+    // Token lokal tetap harus dihapus
+  } finally {
+    // Pastikan token lokal selalu dihapus
+    authStorage.clearTokens();
+  }
+};
+
+/**
+ * Mengambil data user yang sedang login
+ * @returns Data user yang sedang terautentikasi
+ * @throws Error jika user tidak terautentikasi atau request gagal
+ */
+export const getCurrentUser = async (): Promise<UserData> => {
+  const response = await apiFetch('/api/auth/me', {
+    method: 'GET',
+  });
+
+  const result: ApiResponse<UserData> = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || 'Gagal mengambil data user');
+  }
+
+  return result.data;
+};
+
