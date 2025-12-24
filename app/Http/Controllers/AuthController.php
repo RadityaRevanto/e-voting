@@ -518,4 +518,46 @@ class AuthController extends Controller
             return HttpStatus::code500($th->getMessage());
         }
     }
+
+    public function createAdmin(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email|max:255|unique:users,email',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            $name = explode('@', $request->email)[0];
+
+            // Create admin user
+            $user = User::create([
+                'name' => $name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'role' => 'admin',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Akun admin berhasil dibuat',
+                'data' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                ],
+            ], 201);
+
+        } catch (\Throwable $th) {
+            return HttpStatus::code500($th->getMessage());
+        }
+    }
 }

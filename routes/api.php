@@ -50,6 +50,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/activity-logs', [ActivityLogController::class, 'index']);
     });
 
+    Route::middleware('role:super_admin')->prefix('admin')->group(function () {
+        Route::post('/create', [AuthController::class, 'createAdmin']);
+    });
+
     // Admin only
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         // Warga
@@ -62,7 +66,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/register', [PaslonController::class, 'register']);
             Route::delete('/{id}/delete', [PaslonController::class, 'deleteById']);
         });
-        
+
         // Vote Guidelines (admin manage)
         Route::prefix('vote-guidelines')->group(function () {
             Route::post('/create', [VoteGuidelineController::class, 'create']);
@@ -70,10 +74,10 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/{id}/delete', [VoteGuidelineController::class, 'deleteById']);
             Route::post('/swap', [VoteGuidelineController::class, 'swap']); // masih ngebug
         });
-        
+
         // QR Codes
         Route::post('/qr-codes/generate', [QRCodeController::class, 'generate']);
-        
+
         // Live Result
         Route::get('/vote/life-result', [VoteController::class, 'lifeResult']);
         Route::get('/vote/voting-process', [VoteController::class, 'votingProcess']);
@@ -87,7 +91,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [PaslonController::class, 'test']);
         Route::post('/update-visi-misi', [PaslonController::class, 'updateVisiMisi']);
     });
-    
+
     // Voter only
     Route::middleware('role:voter')->prefix('voter')->group(function () {
         // Paslon
@@ -100,7 +104,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::prefix('vote')->group(function () {
             Route::post('/create', [VoteController::class, 'create']);
         });
-        
+
         // QR Code
         Route::prefix('qr-codes')->group(function () {
             Route::post('/validate', [QRCodeController::class, 'validate']);
