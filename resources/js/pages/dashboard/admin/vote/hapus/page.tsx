@@ -16,90 +16,50 @@ import {
 } from "@/components/ui/dialog";
 import { Head } from "@inertiajs/react";
 import { AlertCircle, UserX } from "lucide-react";
-
-interface Candidate {
-    id: number;
-    name: string;
-    department: string;
-    image: string;
-}
-
-// Data dummy - TODO: Ganti dengan data dari API
-const candidatesData: Candidate[] = [
-    {
-        id: 1,
-        name: "Candidate 1",
-        department: "System Information",
-        image: "/images/candidate1.jpg",
-    },
-    {
-        id: 2,
-        name: "Candidate 2",
-        department: "System Information",
-        image: "/images/candidate2.jpg",
-    },
-    {
-        id: 3,
-        name: "Candidate 3",
-        department: "System Information",
-        image: "/images/candidate3.jpg",
-    },
-];
+import { usePaslon, Paslon } from "@/hooks/use-paslon";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function HapusPaslonPage() {
-    const [candidates, setCandidates] = useState<Candidate[]>(candidatesData);
-    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const { paslonList, loading, error, deletingId, deletePaslon } = usePaslon();
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+    const [selectedPaslon, setSelectedPaslon] = useState<Paslon | null>(null);
 
-    // TODO: Fetch data dari API saat component mount
-    // useEffect(() => {
-    //     fetch("/api/candidates")
-    //         .then((res) => res.json())
-    //         .then((data) => setCandidates(data))
-    //         .catch((err) => console.error("Error fetching candidates:", err));
-    // }, []);
-
-    const handleOpenDeleteDialog = (candidate: Candidate) => {
-        setSelectedCandidate(candidate);
+    const handleOpenDeleteDialog = (paslon: Paslon) => {
+        setSelectedPaslon(paslon);
         setDeleteDialogOpen(true);
     };
 
     const handleDelete = async () => {
-        if (!selectedCandidate) return;
+        if (!selectedPaslon) return;
 
-        setDeletingId(selectedCandidate.id);
-        try {
-            // TODO: Ganti dengan endpoint API yang sesuai
-            const response = await fetch(`/api/candidates/${selectedCandidate.id}`, {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "",
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error("Gagal menghapus paslon");
-            }
-
-            // Hapus dari state lokal
-            setCandidates((prev) => prev.filter((c) => c.id !== selectedCandidate.id));
+        const success = await deletePaslon(selectedPaslon.id);
+        
+        if (success) {
             setDeleteDialogOpen(false);
-            setSelectedCandidate(null);
-            setDeletingId(null);
-            
+            setSelectedPaslon(null);
             // Redirect ke halaman vote setelah berhasil
             router.visit("/admin/vote");
-        } catch (error) {
-            console.error("Error:", error);
-            setDeletingId(null);
         }
     };
 
     const handleCancelDelete = () => {
         setDeleteDialogOpen(false);
-        setSelectedCandidate(null);
+        setSelectedPaslon(null);
+    };
+
+    // Helper function untuk mendapatkan nama paslon
+    const getPaslonName = (paslon: Paslon): string => {
+        return `${paslon.nama_ketua} & ${paslon.nama_wakil_ketua}`;
+    };
+
+    // Helper function untuk mendapatkan jurusan
+    const getPaslonDepartment = (paslon: Paslon): string => {
+        return paslon.jurusan_ketua || paslon.jurusan_wakil_ketua || "Tidak Diketahui";
+    };
+
+    // Helper function untuk mendapatkan URL foto
+    const getPaslonImageUrl = (paslon: Paslon): string | null => {
+        return paslon.foto_paslon ? `/storage/${paslon.foto_paslon}` : null;
     };
 
     return (
@@ -126,7 +86,19 @@ export default function HapusPaslonPage() {
                     </header>
 
                     <main>
-                        {candidates.length === 0 ? (
+                        {loading ? (
+                            <div className="flex justify-center items-center min-h-[400px]">
+                                <div className="flex flex-col items-center gap-4">
+                                    <Spinner />
+                                    <p className="text-gray-600">Memuat data paslon...</p>
+                                </div>
+                            </div>
+                        ) : error ? (
+                            <Alert variant="destructive" className="max-w-2xl mx-auto">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertDescription>{error}</AlertDescription>
+                            </Alert>
+                        ) : paslonList.length === 0 ? (
                             <Alert className="max-w-2xl mx-auto">
                                 <AlertCircle className="h-4 w-4" />
                                 <AlertDescription className="text-center py-8 sm:py-12 md:py-16">
@@ -145,45 +117,51 @@ export default function HapusPaslonPage() {
                             </Alert>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
-                                {candidates.map((candidate) => (
-                                    <Card
-                                        key={candidate.id}
-                                        className="hover:border-destructive transition-all"
-                                    >
-                                        <CardContent className="flex flex-col items-center p-4 sm:p-5 md:p-6">
-                                            <Avatar className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 mb-3 sm:mb-4 border-2 sm:border-4 border-gray-100">
-                                                <AvatarImage
-                                                    src={candidate.image}
-                                                    alt={candidate.name || "Candidate"}
-                                                    className="object-cover"
-                                                    onError={(e) => {
-                                                        const target = e.target as HTMLImageElement;
-                                                        target.src = "https://via.placeholder.com/192";
-                                                    }}
-                                                />
-                                                <AvatarFallback className="text-lg sm:text-xl md:text-2xl font-bold text-[#53589a]">
-                                                    {candidate.name?.charAt(0) || "C"}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <h3 className="font-bold text-[#53589a] text-lg sm:text-xl md:text-2xl mb-1 sm:mb-2 text-center px-2">
-                                                {candidate.name}
-                                            </h3>
-                                            <p className="font-medium text-[#53599b] text-sm sm:text-base md:text-lg mb-4 sm:mb-5 md:mb-6 text-center px-2">
-                                                {candidate.department}
-                                            </p>
-                                            <Button
-                                                variant="destructive"
-                                                size="default"
-                                                onClick={() => handleOpenDeleteDialog(candidate)}
-                                                disabled={deletingId === candidate.id}
-                                                className="w-full text-sm sm:text-base md:size-lg"
-                                            >
-                                                <UserX className="mr-2 h-4 w-4" />
-                                                Hapus Paslon
-                                            </Button>
-                                        </CardContent>
-                                    </Card>
-                                ))}
+                                {paslonList.map((paslon) => {
+                                    const paslonName = getPaslonName(paslon);
+                                    const department = getPaslonDepartment(paslon);
+                                    const imageUrl = getPaslonImageUrl(paslon);
+                                    
+                                    return (
+                                        <Card
+                                            key={paslon.id}
+                                            className="hover:border-destructive transition-all"
+                                        >
+                                            <CardContent className="flex flex-col items-center p-4 sm:p-5 md:p-6">
+                                                <Avatar className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 mb-3 sm:mb-4 border-2 sm:border-4 border-gray-100">
+                                                    <AvatarImage
+                                                        src={imageUrl || undefined}
+                                                        alt={paslonName}
+                                                        className="object-cover"
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement;
+                                                            target.src = "https://via.placeholder.com/192";
+                                                        }}
+                                                    />
+                                                    <AvatarFallback className="text-lg sm:text-xl md:text-2xl font-bold text-[#53589a]">
+                                                        {paslon.nama_ketua?.charAt(0) || "P"}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <h3 className="font-bold text-[#53589a] text-lg sm:text-xl md:text-2xl mb-1 sm:mb-2 text-center px-2">
+                                                    {paslonName}
+                                                </h3>
+                                                <p className="font-medium text-[#53599b] text-sm sm:text-base md:text-lg mb-4 sm:mb-5 md:mb-6 text-center px-2">
+                                                    {department}
+                                                </p>
+                                                <Button
+                                                    variant="destructive"
+                                                    size="default"
+                                                    onClick={() => handleOpenDeleteDialog(paslon)}
+                                                    disabled={deletingId === paslon.id}
+                                                    className="w-full text-sm sm:text-base md:size-lg"
+                                                >
+                                                    <UserX className="mr-2 h-4 w-4" />
+                                                    {deletingId === paslon.id ? "Menghapus..." : "Hapus Paslon"}
+                                                </Button>
+                                            </CardContent>
+                                        </Card>
+                                    );
+                                })}
                             </div>
                         )}
                     </main>
@@ -194,25 +172,31 @@ export default function HapusPaslonPage() {
                                 <DialogTitle>Konfirmasi Hapus Paslon</DialogTitle>
                                 <DialogDescription>
                                     Apakah Anda yakin ingin menghapus paslon{" "}
-                                    <strong>{selectedCandidate?.name}</strong>? Tindakan ini tidak dapat dibatalkan.
+                                    <strong>{selectedPaslon ? getPaslonName(selectedPaslon) : ""}</strong>? Tindakan ini tidak dapat dibatalkan.
                                 </DialogDescription>
                             </DialogHeader>
-                            {selectedCandidate && (
+                            {selectedPaslon && (
                                 <div className="flex items-center gap-4 py-4">
                                     <Avatar className="w-16 h-16">
                                         <AvatarImage
-                                            src={selectedCandidate.image}
-                                            alt={selectedCandidate.name}
+                                            src={getPaslonImageUrl(selectedPaslon) || undefined}
+                                            alt={getPaslonName(selectedPaslon)}
                                         />
                                         <AvatarFallback>
-                                            {selectedCandidate.name?.charAt(0) || "C"}
+                                            {selectedPaslon.nama_ketua?.charAt(0) || "P"}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div>
-                                        <p className="font-semibold text-lg">{selectedCandidate.name}</p>
-                                        <p className="text-sm text-muted-foreground">{selectedCandidate.department}</p>
+                                        <p className="font-semibold text-lg">{getPaslonName(selectedPaslon)}</p>
+                                        <p className="text-sm text-muted-foreground">{getPaslonDepartment(selectedPaslon)}</p>
                                     </div>
                                 </div>
+                            )}
+                            {error && (
+                                <Alert variant="destructive" className="mt-2">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertDescription>{error}</AlertDescription>
+                                </Alert>
                             )}
                             <DialogFooter>
                                 <Button
