@@ -92,11 +92,16 @@ import { usePage } from "@inertiajs/react"
     );
   }
 
+  import { useRoleSwitch } from "@/hooks/use-role-switch"
+
   type PaslonLayoutProps = {
     children: ReactNode;
   };
 
   export default function PaslonLayout({ children }: PaslonLayoutProps) {
+    // Auto switch role berdasarkan route
+    useRoleSwitch();
+    
     return (
       <SidebarProvider>
         <AppSidebarPaslon />

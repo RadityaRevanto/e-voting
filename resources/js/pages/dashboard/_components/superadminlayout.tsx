@@ -26,6 +26,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
+import { useRoleSwitch } from "@/hooks/use-role-switch";
 
 
 // ⬇⬇⬇ SUPERADMIN SIDEBAR
@@ -113,6 +114,9 @@ type SuperadminLayoutProps = {
 };
 
 export default function SuperadminLayout({ children }: SuperadminLayoutProps) {
+  // Auto switch role berdasarkan route
+  useRoleSwitch();
+  
   return (
     <SidebarProvider>
       <AppSidebarSuperadmin />

@@ -25,6 +25,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
+import { useRoleSwitch } from "@/hooks/use-role-switch";
 
 
 // ⬇⬇⬇ USER SIDEBAR — sama kaya AppSidebarPaslon, tapi NavUserProfile diganti LOGO
@@ -104,6 +105,9 @@ type UserLayoutProps = {
 };
 
 export default function UserLayout({ children }: UserLayoutProps) {
+  // Auto switch role berdasarkan route
+  useRoleSwitch();
+  
   return (
     <SidebarProvider>
       <AppSidebarUser />
