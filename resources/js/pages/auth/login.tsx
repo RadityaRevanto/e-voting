@@ -33,16 +33,21 @@ export default function Login({
         setLoading(true);
 
         try {
+            // authLogin akan menyimpan token sesuai role dan set active role
             const user = await authLogin({ email, password });
 
+            // Redirect berdasarkan role
+            // useRoleSwitch hook di layout akan otomatis set active role berdasarkan route
             const role = user?.role as string | undefined;
             let redirectPath = '/';
 
-            if (role === 'admin' || role === 'super_admin') {
+            if (role === 'admin') {
                 redirectPath = '/admin/dashboard';
+            } else if (role === 'super_admin') {
+                redirectPath = '/superadmin/log-activity';
             } else if (role === 'paslon') {
                 redirectPath = '/paslon/dashboard';
-            } else if (role === 'user') {
+            } else if (role === 'user' || role === 'voter') {
                 redirectPath = '/user/vote';
             }
 

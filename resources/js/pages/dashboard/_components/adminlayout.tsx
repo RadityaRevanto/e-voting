@@ -14,12 +14,16 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { useRoleSwitch } from "@/hooks/use-role-switch"
 
 type DashboardLayoutProps = {
   children: ReactNode;
 };
 
 export default function AdminDashboardlayout({ children }: DashboardLayoutProps) {
+    // Auto switch role berdasarkan route
+    useRoleSwitch();
+    
     return (
     <SidebarProvider>
       <AppSidebar />

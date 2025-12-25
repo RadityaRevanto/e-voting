@@ -5,16 +5,22 @@ let isRefreshing = false;
 let refreshPromise: Promise<string> | null = null;
 
 /**
- * Refresh access token menggunakan refresh token
+ * Refresh access token menggunakan refresh token untuk role aktif
+ * @param role Role yang ingin di-refresh (opsional, default: active role)
  * @returns Promise yang resolve dengan access token baru
  */
-export const refreshAccessToken = async (): Promise<string> => {
+export const refreshAccessToken = async (role?: authStorage.UserRole): Promise<string> => {
   // Jika sedang refresh, kembalikan promise yang sama
   if (isRefreshing && refreshPromise) {
     return refreshPromise;
   }
 
-  const refreshToken = authStorage.getRefreshToken();
+  const targetRole = role || authStorage.getActiveRole();
+  if (!targetRole) {
+    throw new Error('Role tidak tersedia');
+  }
+
+  const refreshToken = authStorage.getRefreshToken(targetRole);
   if (!refreshToken) {
     throw new Error('Refresh token tidak tersedia');
   }
@@ -33,14 +39,14 @@ export const refreshAccessToken = async (): Promise<string> => {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        // Refresh gagal, bersihkan token
-        authStorage.clearTokens();
+        // Refresh gagal, bersihkan token untuk role tersebut
+        authStorage.clearTokens(targetRole);
         throw new Error(data.message || 'Refresh token gagal');
       }
 
-      // Update access token baru
+      // Update access token baru untuk role tersebut
       const { access_token, expires_in } = data.data;
-      authStorage.updateAccessToken(access_token, expires_in);
+      authStorage.updateAccessToken(access_token, expires_in, targetRole);
 
       return access_token;
     } finally {
@@ -55,6 +61,7 @@ export const refreshAccessToken = async (): Promise<string> => {
 
 /**
  * Wrapper fetch untuk semua request API dengan autentikasi otomatis
+ * Menggunakan token berdasarkan active role
  * @param url URL endpoint (relative atau absolute)
  * @param options Request options (headers, body, dll)
  * @returns Promise<Response>
@@ -63,17 +70,36 @@ export const apiFetch = async (
   url: string,
   options: RequestInit = {},
 ): Promise<Response> => {
+  // Ambil active role
+  const activeRole = authStorage.getActiveRole();
+  
+  // Jika tidak ada active role, lakukan request tanpa token
+  if (!activeRole) {
+    const headers = new Headers(options.headers);
+    const isFormDataBody =
+      typeof FormData !== 'undefined' && options.body instanceof FormData;
+
+    if (options.body && !headers.has('Content-Type') && !isFormDataBody) {
+      headers.set('Content-Type', 'application/json');
+    }
+
+    return fetch(url, {
+      ...options,
+      headers,
+    });
+  }
+
   // Cek apakah token expired sebelum request
-  if (authStorage.isTokenExpired()) {
-    const refreshToken = authStorage.getRefreshToken();
+  if (authStorage.isTokenExpired(60, activeRole)) {
+    const refreshToken = authStorage.getRefreshToken(activeRole);
     if (refreshToken) {
       // Refresh token jika tersedia
-      await refreshAccessToken();
+      await refreshAccessToken(activeRole);
     }
   }
 
-  // Ambil access token terbaru
-  const accessToken = authStorage.getAccessToken();
+  // Ambil access token terbaru untuk active role
+  const accessToken = authStorage.getAccessToken(activeRole);
 
   // Buat headers baru dari options yang ada
   const headers = new Headers(options.headers);
@@ -105,14 +131,14 @@ export const apiFetch = async (
 
   // Handle 401 Unauthorized
   if (response.status === 401) {
-    const refreshToken = authStorage.getRefreshToken();
+    const refreshToken = authStorage.getRefreshToken(activeRole);
     if (refreshToken) {
       try {
-        // Coba refresh token
-        await refreshAccessToken();
+        // Coba refresh token untuk active role
+        await refreshAccessToken(activeRole);
 
         // Ambil access token baru
-        const newAccessToken = authStorage.getAccessToken();
+        const newAccessToken = authStorage.getAccessToken(activeRole);
 
         if (newAccessToken) {
           // Update Authorization header dengan token baru
