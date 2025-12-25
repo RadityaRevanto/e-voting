@@ -5,14 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { QRCodeSVG } from "qrcode.react";
-import { Download, QrCode } from "lucide-react";
+import { Download, QrCode, Loader2 } from "lucide-react";
 import InputError from "@/pages/dashboard/_components/input-error";
+import { useQRCodeGenerate } from "@/hooks/use-qr-code-generate";
 
 export default function AdminGeneratePage() {
     const [nik, setNik] = useState("");
-    const [error, setError] = useState("");
-    const [qrValue, setQrValue] = useState("");
     const [qrSize, setQrSize] = useState(256);
+    const { qrCodeData, loading, error, generateQRCode, reset } = useQRCodeGenerate();
 
     useEffect(() => {
         const updateQrSize = () => {
@@ -33,32 +33,18 @@ export default function AdminGeneratePage() {
     const handleNikChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value.replace(/\D/g, ""); // Hanya angka
         setNik(value);
-        setError("");
-        setQrValue(""); // Reset QR code saat NIK berubah
+        if (qrCodeData) {
+            reset(); // Reset QR code saat NIK berubah
+        }
     };
 
-    const validateNik = (nikValue: string): boolean => {
-        if (!nikValue) {
-            setError("NIK KTP harus diisi");
-            return false;
-        }
-        if (nikValue.length !== 16) {
-            setError("NIK KTP harus terdiri dari 16 digit");
-            return false;
-        }
-        return true;
-    };
-
-    const handleGenerate = (e: React.FormEvent) => {
+    const handleGenerate = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (validateNik(nik)) {
-            setQrValue(nik);
-            setError("");
-        }
+        await generateQRCode(nik, 10); // Default expiration 10 menit
     };
 
     const handleDownload = () => {
-        if (!qrValue) return;
+        if (!qrCodeData?.qr_code_content) return;
 
         const svg = document.getElementById("qr-code-svg");
         if (!svg) return;
@@ -117,27 +103,35 @@ export default function AdminGeneratePage() {
                                             required
                                             className="h-12 sm:h-14 text-base sm:text-lg"
                                         />
-                                        <InputError message={error} />
+                                        <InputError message={error || undefined} />
                                         <p className="text-sm sm:text-base text-gray-500">
                                             Masukkan 16 digit NIK KTP untuk generate QR Code
                                         </p>
                                     </div>
                                     <Button
                                         type="submit"
-                                        className="w-full sm:w-auto bg-[#53589a] hover:bg-[#53589a]/90 text-base sm:text-lg"
+                                        disabled={loading}
+                                        className="w-full sm:w-auto bg-[#53589a] hover:bg-[#53589a]/90 text-base sm:text-lg disabled:opacity-50"
                                         size="lg"
                                     >
-                                        Generate QR Code
+                                        {loading ? (
+                                            <>
+                                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                                Generating...
+                                            </>
+                                        ) : (
+                                            "Generate QR Code"
+                                        )}
                                     </Button>
                                 </form>
                             </CardContent>
                         </Card>
 
-                        {qrValue && (
+                        {qrCodeData && (
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-[#53589a] break-words">
-                                        QR Code NIK: {nik}
+                                        QR Code NIK: {qrCodeData.warga_nik}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4 sm:space-y-6">
@@ -145,13 +139,17 @@ export default function AdminGeneratePage() {
                                         <div className="bg-white p-2 sm:p-3 md:p-4 rounded-lg shadow-md">
                                             <QRCodeSVG
                                                 id="qr-code-svg"
-                                                value={qrValue}
+                                                value={qrCodeData.qr_code_content}
                                                 size={qrSize}
                                                 level="H"
                                                 includeMargin={true}
                                                 className="max-w-full h-auto"
                                             />
                                         </div>
+                                    </div>
+                                    <div className="text-sm sm:text-base text-gray-600 space-y-1">
+                                        <p><strong>Token:</strong> {qrCodeData.token}</p>
+                                        <p><strong>Expires At:</strong> {new Date(qrCodeData.expires_at).toLocaleString('id-ID')}</p>
                                     </div>
                                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                                         <Button
@@ -165,8 +163,7 @@ export default function AdminGeneratePage() {
                                         <Button
                                             onClick={() => {
                                                 setNik("");
-                                                setQrValue("");
-                                                setError("");
+                                                reset();
                                             }}
                                             variant="outline"
                                             size="lg"
