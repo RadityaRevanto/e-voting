@@ -5,15 +5,25 @@ import { LiveResultsSection } from "./components/LiveResultsSection";
 import { OngoingElectionSection } from "./components/OngoingElectionSection";
 import { VotingProcessSection } from "./components/VotingProcessSection";
 import { CalendarSection } from "./components/CalendarSection";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 export function AdminDashboardPage() {
+  const { user, loading } = useCurrentUser();
+  
+  // Ambil nama pertama dari nama lengkap untuk greeting
+  const firstName = user?.name?.split(" ")[0] || "User";
+
   return (
     <AdminDashboardlayout>
       <div className="bg-white w-full min-h-screen p-4 md:p-6 xl:p-8">
         <header className="mb-4 md:mb-6 xl:mb-8">
           <h1 className="text-[#53589a] text-2xl md:text-3xl xl:text-4xl font-medium mb-1">
             <span className="font-medium">Hello</span>
-            <span className="font-bold">, Aditya!</span>
+            {loading ? (
+              <span className="font-bold">...</span>
+            ) : (
+              <span className="font-bold">, {firstName}!</span>
+            )}
           </h1>
           <p className="text-[#53599b] text-base md:text-lg xl:text-xl font-medium">
             Welcome To Online Voting System

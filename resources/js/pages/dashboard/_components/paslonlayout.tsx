@@ -8,6 +8,7 @@ import { usePage } from "@inertiajs/react"
   import { NavMain } from "@/pages/dashboard/_components/nav-main"
   import { LogoutConfirmation } from "@/pages/dashboard/_components/logout-confirmation"
   import { NavUserProfile } from "@/pages/dashboard/_components/nav-user-profile"
+  import { useCurrentUser } from "@/hooks/use-current-user"
   import {
     Sidebar,
     SidebarContent,
@@ -34,32 +35,34 @@ import { usePage } from "@inertiajs/react"
   // Buat komponen AppSidebarPaslon langsung di file ini
   function AppSidebarPaslon({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { url: currentUrl } = usePage();
+  const { user, loading } = useCurrentUser();
 
-  const data = {
-      user: {
-        name: "Aditya Eka",
-        email: "aditya@example.com",
-        avatar: "/avatars/shadcn.jpg",
-      },
-      navMain: [
-        {
-          title: "Dashboard",
-          url: "/paslon/dashboard",
-          icon: Home,
-        },
-        {
-          title: "Settings",
-          url: "/paslon/settings",
-          icon: Settings2,
-        },
-      ],
-    };
+  const navMain = [
+    {
+      title: "Dashboard",
+      url: "/paslon/dashboard",
+      icon: Home,
+    },
+    {
+      title: "Settings",
+      url: "/paslon/settings",
+      icon: Settings2,
+    },
+  ].map((item) => ({
+    ...item,
+    isActive: currentUrl.startsWith(item.url),
+  }));
 
-    // Tandai item aktif berdasarkan URL saat ini
-    const navMain = data.navMain.map((item) => ({
-      ...item,
-      isActive: currentUrl.startsWith(item.url),
-    }));
+  // Default user data jika masih loading atau error
+  const userData = user ? {
+    name: user.name,
+    email: user.email,
+    avatar: "/avatars/shadcn.jpg", // Default avatar, bisa diganti jika ada di API
+  } : {
+    name: "User",
+    email: "",
+    avatar: "/avatars/shadcn.jpg",
+  };
 
     return (
       <Sidebar 
@@ -69,7 +72,14 @@ import { usePage } from "@inertiajs/react"
         {...props}
       >
         <SidebarHeader className="border-b-0">
-          <NavUserProfile user={data.user} />
+          {loading ? (
+            <div className="flex flex-col items-center px-4 py-6">
+              <div className="h-20 w-20 rounded-full bg-gray-200 animate-pulse mb-3" />
+              <div className="h-6 w-32 bg-gray-200 animate-pulse rounded mb-1 mt-3" />
+            </div>
+          ) : (
+            <NavUserProfile user={userData} />
+          )}
         </SidebarHeader>
         <SidebarContent className="px-2 group-data-[collapsible=icon]:px-1">
           <NavMain items={navMain} />
