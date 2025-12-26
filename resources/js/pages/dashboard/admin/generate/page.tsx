@@ -131,11 +131,11 @@ export default function AdminGeneratePage() {
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-[#53589a] break-words">
-                                        QR Code NIK: {qrCodeData.warga_nik}
+                                        QR Code
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4 sm:space-y-6">
-                                    <div className="flex flex-col items-center justify-center p-4 sm:p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                                    <div className="flex flex-col items-center justify-center">
                                         <div className="bg-white p-2 sm:p-3 md:p-4 rounded-lg shadow-md">
                                             <QRCodeSVG
                                                 id="qr-code-svg"
@@ -146,10 +146,6 @@ export default function AdminGeneratePage() {
                                                 className="max-w-full h-auto"
                                             />
                                         </div>
-                                    </div>
-                                    <div className="text-sm sm:text-base text-gray-600 space-y-1">
-                                        <p><strong>Token:</strong> {qrCodeData.token}</p>
-                                        <p><strong>Expires At:</strong> {new Date(qrCodeData.expires_at).toLocaleString('id-ID')}</p>
                                     </div>
                                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                                         <Button
