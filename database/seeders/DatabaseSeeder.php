@@ -3,11 +3,15 @@
 namespace Database\Seeders;
 
 use App\Models\Paslon;
+use App\Models\Schedule;
 use App\Models\User;
 use App\Models\Warga;
+use Carbon\Carbon;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+
+use function Symfony\Component\Clock\now;
 
 class DatabaseSeeder extends Seeder
 {
@@ -92,6 +96,39 @@ class DatabaseSeeder extends Seeder
         ]);
         Warga::firstOrCreate([
             'nik' => hash('sha256', '3201234567890003')
+        ]);
+
+
+        $now = Carbon::now()->startOfMinute();
+
+        // Registration
+        $registrationStart = $now;
+        $registrationEnd   = $registrationStart->copy()->addMinutes(5);
+        Schedule::firstOrCreate([
+            'title' => 'Pendaftaran Pemilih',
+            'start_time' => $registrationStart,
+            'end_time' => $registrationEnd,
+            'tag' => 'registration',
+        ]);
+
+        // Voting (1 menit setelah registration selesai)
+        $votingStart = $registrationEnd->copy()->addMinute();
+        $votingEnd   = $votingStart->copy()->addMinutes(5);
+        Schedule::firstOrCreate([
+            'title' => 'Masa Voting',
+            'start_time' => $votingStart,
+            'end_time' => $votingEnd,
+            'tag' => 'voting',
+        ]);
+
+        // Announcement (1 menit setelah voting selesai)
+        $announcementStart = $votingEnd->copy()->addMinute();
+        $announcementEnd   = $announcementStart->copy()->addMinutes(10);
+        Schedule::firstOrCreate([
+            'title' => 'Pengumuman Hasil Voting',
+            'start_time' => $announcementStart,
+            'end_time' => $announcementEnd,
+            'tag' => 'announcement',
         ]);
     }
 }

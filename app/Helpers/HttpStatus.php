@@ -12,6 +12,14 @@ class HttpStatus
         ], 400);
     }
     
+    public static function code401 (String $message = "Unauthenticated"){
+        return response()->json([
+            'success' => false,
+            'message' => $message,
+            'data' => [],
+        ], 401);
+    }
+
     public static function code403 (String $message = "Forbidden"){
         return response()->json([
             'success' => false,

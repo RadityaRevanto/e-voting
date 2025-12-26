@@ -16,6 +16,10 @@ use Illuminate\Support\Facades\Validator;
 class VoteController extends Controller
 {
     public function create(Request $request) {
+        if (!ScheduleController::isVotingActive()) {
+            return HttpStatus::code403('Proses voting sedang tidak aktif');
+        }
+
         // Validate
         $validator = Validator::make($request->all(), [
             'warga_nik' => 'required|string|max:64',
@@ -43,6 +47,7 @@ class VoteController extends Controller
             'hashed_vote' => $hashedVote
         ]);
 
+        // Buat log vote
         ActivityLogHelper::createVoteLog(
             $request->user()->email." : NIK ".$request->warga_nik." melakukan vote untuk Paslon ID ".$request->paslon_id,
             $vote->created_at
