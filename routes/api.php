@@ -6,6 +6,7 @@ use App\Http\Controllers\PaslonController;
 use App\Http\Controllers\VoteController;
 use App\Http\Controllers\WargaController;
 use App\Http\Controllers\QRCodeController;
+use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\UtilityController;
 use App\Http\Controllers\VoteGuidelineController;
 use Illuminate\Http\Request;
@@ -29,6 +30,11 @@ Route::prefix('vote-guidelines')->group(function () {
     Route::get('/', [VoteGuidelineController::class, 'shows']);
 });
 
+Route::prefix('schedules')->group(function () {
+    Route::get('/', [ScheduleController::class, 'index']);
+    Route::get('/current', [ScheduleController::class, 'currentEvent']);
+});
+
 /*
 |--------------------------------------------------------------------------
 | PROTECTED ROUTES (AUTH REQUIRED)
@@ -41,6 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
+        Route::post('/change-password', [AuthController::class, 'changePassword']);
         Route::get('/sessions', [AuthController::class, 'getActiveSessions']);
         Route::delete('/sessions/{tokenId}', [AuthController::class, 'revokeSession']);
     });
@@ -48,6 +55,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:super_admin')->prefix('superadmin')->group(function () {
         Route::delete('/vote/clear', [VoteController::class, 'clearVotesData']);
         Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+
+        Route::prefix('schedules')->group(function () {
+            Route::post('/create', [ScheduleController::class, 'store']);
+        });
     });
 
     Route::middleware('role:super_admin')->prefix('admin')->group(function () {
