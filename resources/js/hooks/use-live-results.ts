@@ -76,15 +76,31 @@ export function useLiveResults(
 
       if (!paslonResponse.ok) {
         const errorData = await paslonResponse.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Gagal mengambil data paslon"
-        );
+        const errorMessage = typeof errorData === 'object' && errorData !== null && 'message' in errorData
+          ? String(errorData.message)
+          : "Gagal mengambil data paslon";
+        throw new Error(errorMessage);
       }
 
       const paslonData: PaslonApiResponse = await paslonResponse.json();
 
-      if (!paslonData.success || !paslonData.data) {
+      if (!paslonData.success || !Array.isArray(paslonData.data) || paslonData.data.length === 0) {
         throw new Error("Data paslon tidak valid");
+      }
+
+      // Validasi setiap paslon dalam array
+      const validPaslonList = paslonData.data.filter((item): item is Paslon => {
+        return (
+          typeof item === 'object' &&
+          item !== null &&
+          typeof item.id === 'number' &&
+          typeof item.nama_ketua === 'string' &&
+          typeof item.nama_wakil_ketua === 'string'
+        );
+      });
+
+      if (validPaslonList.length === 0) {
+        throw new Error("Tidak ada data paslon yang valid");
       }
 
       // Fetch data live results
@@ -92,14 +108,15 @@ export function useLiveResults(
 
       if (!resultsResponse.ok) {
         const errorData = await resultsResponse.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Gagal mengambil data live results"
-        );
+        const errorMessage = typeof errorData === 'object' && errorData !== null && 'message' in errorData
+          ? String(errorData.message)
+          : "Gagal mengambil data live results";
+        throw new Error(errorMessage);
       }
 
       const resultsData: LiveResultApiResponse = await resultsResponse.json();
 
-      if (!resultsData.success || !resultsData.data) {
+      if (!resultsData.success || typeof resultsData.data !== 'object' || resultsData.data === null) {
         throw new Error("Data live results tidak valid");
       }
 
@@ -108,11 +125,16 @@ export function useLiveResults(
       let total = 0;
 
       // Sort paslon by ID untuk memastikan urutan konsisten
-      const sortedPaslon = [...paslonData.data].sort((a, b) => a.id - b.id);
+      const sortedPaslon = [...validPaslonList].sort((a, b) => a.id - b.id);
 
       sortedPaslon.forEach((paslon) => {
         const voteCountKey = `paslon${paslon.id}`;
-        const voteCount = (resultsData.data[voteCountKey] as number) || 0;
+        const voteCountValue = resultsData.data[voteCountKey];
+        
+        // Validasi runtime untuk vote count
+        const voteCount = typeof voteCountValue === 'number' && voteCountValue >= 0 
+          ? voteCountValue 
+          : 0;
 
         total += voteCount;
 
@@ -138,7 +160,7 @@ export function useLiveResults(
 
       setResults(transformedResults);
       setTotalVotes(total);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Error fetching live results:", err);
       const errorMessage = err instanceof Error
         ? err.message

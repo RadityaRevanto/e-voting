@@ -26,20 +26,21 @@ export function useQRCodeGenerate(): UseQRCodeGenerateResult {
   const [error, setError] = useState<string | null>(null);
 
   const generateQRCode = useCallback(
-    async (nik: string, expirationMinutes: number = 10) => {
+    async (nik: string, expirationMinutes: number = 10): Promise<void> => {
       // Validasi NIK
-      if (!nik) {
+      if (typeof nik !== 'string' || !nik.trim()) {
         setError("NIK KTP harus diisi");
         return;
       }
 
-      if (nik.length !== 16) {
-        setError("NIK KTP harus terdiri dari 16 digit");
+      const trimmedNik = nik.trim();
+      if (trimmedNik.length !== 16 || !/^\d+$/.test(trimmedNik)) {
+        setError("NIK KTP harus terdiri dari 16 digit angka");
         return;
       }
 
       // Validasi expiration minutes sesuai backend (min: 5, max: 1440)
-      if (expirationMinutes < 5 || expirationMinutes > 1440) {
+      if (typeof expirationMinutes !== 'number' || !Number.isInteger(expirationMinutes) || expirationMinutes < 5 || expirationMinutes > 1440) {
         setError("Expiration minutes harus antara 5 sampai 1440 menit");
         return;
       }
@@ -50,28 +51,45 @@ export function useQRCodeGenerate(): UseQRCodeGenerateResult {
 
       try {
         const response = await apiClient.post("/api/admin/qr-codes/generate", {
-          warga_nik: nik,
+          warga_nik: trimmedNik,
           expiration_minutes: expirationMinutes,
         });
 
         const data = await response.json();
 
         if (!response.ok || !data.success) {
-          throw new Error(data.message || "Gagal generate QR code");
+          const errorMessage = typeof data === 'object' && data !== null && 'message' in data
+            ? String(data.message)
+            : "Gagal generate QR code";
+          throw new Error(errorMessage);
         }
 
-        if (data.data) {
-          setQrCodeData(data.data);
-        } else {
+        // Validasi response data structure
+        if (!data.data || typeof data.data !== 'object') {
           throw new Error("Data QR code tidak ditemukan");
         }
-      } catch (err) {
+
+        const qrData = data.data as QRCodeData;
+        
+        // Validasi runtime untuk memastikan data QR code valid
+        if (
+          typeof qrData.token !== 'string' ||
+          typeof qrData.qr_code_content !== 'string' ||
+          typeof qrData.qr_code_id !== 'number' ||
+          typeof qrData.expires_at !== 'string' ||
+          typeof qrData.warga_nik !== 'string'
+        ) {
+          throw new Error("Format data QR code tidak valid");
+        }
+
+        setQrCodeData(qrData);
+      } catch (err: unknown) {
         console.error("Error generating QR code:", err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Terjadi kesalahan saat generate QR code"
-        );
+        const errorMessage = err instanceof Error
+          ? err.message
+          : "Terjadi kesalahan saat generate QR code";
+        
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }

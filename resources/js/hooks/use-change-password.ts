@@ -50,14 +50,18 @@ export function useChangePassword(): UseChangePasswordResult {
     }, []);
 
     const handleSubmit = useCallback(
-        async (e: React.FormEvent<HTMLFormElement>) => {
+        async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
             e.preventDefault();
             setErrors({});
             setSuccess("");
             setProcessing(true);
 
-            // Validasi client-side
-            if (!currentPassword || !password || !passwordConfirmation) {
+            // Validasi client-side dengan type checking
+            const trimmedCurrentPassword = typeof currentPassword === 'string' ? currentPassword.trim() : '';
+            const trimmedPassword = typeof password === 'string' ? password.trim() : '';
+            const trimmedPasswordConfirmation = typeof passwordConfirmation === 'string' ? passwordConfirmation.trim() : '';
+
+            if (!trimmedCurrentPassword || !trimmedPassword || !trimmedPasswordConfirmation) {
                 setErrors({
                     message: "Semua field harus diisi",
                 });
@@ -65,7 +69,7 @@ export function useChangePassword(): UseChangePasswordResult {
                 return;
             }
 
-            if (password !== passwordConfirmation) {
+            if (trimmedPassword !== trimmedPasswordConfirmation) {
                 setErrors({
                     confirm_password: "Konfirmasi password tidak cocok",
                 });
@@ -73,7 +77,7 @@ export function useChangePassword(): UseChangePasswordResult {
                 return;
             }
 
-            if (password.length < 8) {
+            if (trimmedPassword.length < 8) {
                 setErrors({
                     password: "Password minimal 8 karakter",
                 });
@@ -82,39 +86,43 @@ export function useChangePassword(): UseChangePasswordResult {
             }
 
             try {
+                const requestData: ChangePasswordData = {
+                    old_password: trimmedCurrentPassword,
+                    password: trimmedPassword,
+                    confirm_password: trimmedPasswordConfirmation,
+                };
+
                 const response = await apiClient.post(
                     "/api/auth/change-password",
-                    {
-                        old_password: currentPassword,
-                        password: password,
-                        confirm_password: passwordConfirmation,
-                    } as ChangePasswordData
+                    requestData
                 );
 
                 const data = await response.json();
 
                 if (!response.ok) {
                     // Handle error response dari backend
-                    if (data.errors) {
+                    if (data && typeof data === 'object' && 'errors' in data && data.errors && typeof data.errors === 'object') {
                         // Jika ada validation errors dari Laravel
                         const formattedErrors: ChangePasswordErrors = {};
-                        if (data.errors.old_password) {
-                            formattedErrors.old_password = Array.isArray(data.errors.old_password)
-                                ? data.errors.old_password[0]
-                                : data.errors.old_password;
+                        const errors = data.errors as Record<string, unknown>;
+                        
+                        if (errors.old_password) {
+                            formattedErrors.old_password = Array.isArray(errors.old_password)
+                                ? String(errors.old_password[0])
+                                : String(errors.old_password);
                         }
-                        if (data.errors.password) {
-                            formattedErrors.password = Array.isArray(data.errors.password)
-                                ? data.errors.password[0]
-                                : data.errors.password;
+                        if (errors.password) {
+                            formattedErrors.password = Array.isArray(errors.password)
+                                ? String(errors.password[0])
+                                : String(errors.password);
                         }
-                        if (data.errors.confirm_password) {
-                            formattedErrors.confirm_password = Array.isArray(data.errors.confirm_password)
-                                ? data.errors.confirm_password[0]
-                                : data.errors.confirm_password;
+                        if (errors.confirm_password) {
+                            formattedErrors.confirm_password = Array.isArray(errors.confirm_password)
+                                ? String(errors.confirm_password[0])
+                                : String(errors.confirm_password);
                         }
                         setErrors(formattedErrors);
-                    } else if (data.message) {
+                    } else if (data && typeof data === 'object' && 'message' in data && typeof data.message === 'string') {
                         setErrors({ message: data.message });
                     } else {
                         setErrors({
@@ -126,8 +134,12 @@ export function useChangePassword(): UseChangePasswordResult {
                 }
 
                 // Success response
-                if (data.success) {
-                    setSuccess(data.message || "Password berhasil diubah!");
+                if (data && typeof data === 'object' && data.success === true) {
+                    const successMessage = typeof data.message === 'string' 
+                        ? data.message 
+                        : "Password berhasil diubah!";
+                    
+                    setSuccess(successMessage);
                     setCurrentPassword("");
                     setPassword("");
                     setPasswordConfirmation("");
@@ -138,15 +150,22 @@ export function useChangePassword(): UseChangePasswordResult {
                         setSuccess("");
                     }, 5000);
                 } else {
+                    const errorMessage = data && typeof data === 'object' && 'message' in data && typeof data.message === 'string'
+                        ? data.message
+                        : "Terjadi kesalahan saat mengubah password";
+                    
                     setErrors({
-                        message: data.message || "Terjadi kesalahan saat mengubah password",
+                        message: errorMessage,
                     });
                 }
-            } catch (error) {
+            } catch (error: unknown) {
                 console.error("Error changing password:", error);
+                const errorMessage = error instanceof Error
+                    ? error.message
+                    : "Terjadi kesalahan saat mengubah password. Silakan coba lagi.";
+                
                 setErrors({
-                    message:
-                        "Terjadi kesalahan saat mengubah password. Silakan coba lagi.",
+                    message: errorMessage,
                 });
             } finally {
                 setProcessing(false);

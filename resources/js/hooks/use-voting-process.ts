@@ -47,7 +47,7 @@ export function useVotingProcess(
   const [totalVotes, setTotalVotes] = useState(0);
   const [totalGolput, setTotalGolput] = useState(0);
 
-  const fetchVotingProcess = useCallback(async () => {
+  const fetchVotingProcess = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -56,9 +56,10 @@ export function useVotingProcess(
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Gagal mengambil data voting process"
-        );
+        const errorMessage = typeof errorData === 'object' && errorData !== null && 'message' in errorData
+          ? String(errorData.message)
+          : "Gagal mengambil data voting process";
+        throw new Error(errorMessage);
       }
 
       const data: VotingProcessApiResponse = await response.json();
@@ -69,40 +70,44 @@ export function useVotingProcess(
 
       const { vilager_total, vote_total, golput } = data.data;
 
+      // Validasi runtime untuk memastikan nilai adalah number yang valid
+      const validatedVilagerTotal = typeof vilager_total === 'number' && vilager_total >= 0 ? vilager_total : 0;
+      const validatedVoteTotal = typeof vote_total === 'number' && vote_total >= 0 ? vote_total : 0;
+      const validatedGolput = typeof golput === 'number' && golput >= 0 ? golput : 0;
+
       // Set individual values
-      setTotalRegistered(vilager_total);
-      setTotalVotes(vote_total);
-      setTotalGolput(golput);
+      setTotalRegistered(validatedVilagerTotal);
+      setTotalVotes(validatedVoteTotal);
+      setTotalGolput(validatedGolput);
 
       // Transform data menjadi format VotingStatistic
       const transformedStatistics: VotingStatistic[] = [
         {
           id: 1,
-          value: vilager_total,
+          value: validatedVilagerTotal,
           label: "Total Numbers Of Registered Votes",
           circleColor: "#53599b",
         },
         {
           id: 2,
-          value: vote_total,
+          value: validatedVoteTotal,
           label: "Total Numbers Of Votes",
           circleColor: "#53599b",
         },
         {
           id: 3,
-          value: golput,
+          value: validatedGolput,
           label: "Total Numbers of Golput",
           circleColor: "#ebedff",
         },
       ];
 
       setStatistics(transformedStatistics);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Error fetching voting process:", err);
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Terjadi kesalahan saat mengambil data voting process";
+      const errorMessage = err instanceof Error
+        ? err.message
+        : "Terjadi kesalahan saat mengambil data voting process";
 
       setError(errorMessage);
       setStatistics([]);
