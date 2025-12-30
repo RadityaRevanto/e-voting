@@ -1,12 +1,23 @@
 import React from "react";
+import { useCalendar, type CalendarPeriod } from "@/hooks/use-calendar";
 
 export const CalendarSection = () => {
-  const timeSlots = [
-    { time: "7.00", left: "29px" },
-    { time: "8.00", left: "144px" },
-    { time: "9.00", left: "264px" },
-    { time: "10.00", left: "419px" },
-    { time: "11.00", left: "592px" },
+  const {
+    events,
+    loading,
+    error,
+    selectedPeriod,
+    setSelectedPeriod,
+  } = useCalendar(true, "today");
+
+  const handlePeriodChange = (period: CalendarPeriod) => {
+    setSelectedPeriod(period);
+  };
+
+  const periods: { key: CalendarPeriod; label: string }[] = [
+    { key: "today", label: "Today" },
+    { key: "next_week", label: "Next Week" },
+    { key: "this_month", label: "This Month" },
   ];
 
   return (
@@ -24,60 +35,101 @@ export const CalendarSection = () => {
         className="flex gap-4 md:gap-6 mb-4 md:mb-5"
         aria-label="Calendar view tabs"
       >
-        <div className="relative">
-          <button className="text-[#53589a] text-sm md:text-base font-bold">
-            Today
-          </button>
-          <div
-            className="absolute top-[28px] left-0 w-full h-0.5 bg-[#53599b] rounded-full"
-            aria-hidden="true"
-          />
-        </div>
-        <button className="text-[#8e8fa0] text-sm md:text-base font-bold">
-          Next Week
-        </button>
-        <button className="text-[#8e8fa0] text-sm md:text-base font-bold">
-          This Month
-        </button>
+        {periods.map((period) => (
+          <div key={period.key} className="relative">
+            <button
+              onClick={() => handlePeriodChange(period.key)}
+              className={`text-sm md:text-base font-bold transition-colors ${
+                selectedPeriod === period.key
+                  ? "text-[#53589a]"
+                  : "text-[#8e8fa0]"
+              }`}
+            >
+              {period.label}
+            </button>
+            {selectedPeriod === period.key && (
+              <div
+                className="absolute top-[28px] left-0 w-full h-0.5 bg-[#53599b] rounded-full"
+                aria-hidden="true"
+              />
+            )}
+          </div>
+        ))}
       </nav>
 
       <div className="mb-4 md:mb-5">
-        <div
-          className="bg-[#dbdefc] rounded-[8px] md:rounded-[10px] p-2 md:p-3 mb-3 md:mb-4"
-          role="article"
-          aria-label="Calendar event"
-        >
-          <p className="text-[#53599b] text-sm md:text-[15px] font-bold text-center">
-            Village head election
-          </p>
-        </div>
-
-        <div
-          className="h-0.5 bg-[#8e8fa0cc] rounded-full mb-3 md:mb-4"
-          role="separator"
-          aria-hidden="true"
-        />
-
-        <div className="relative mb-3 md:mb-4">
-          <div
-            className="flex justify-between text-[#8e8fa0cc] text-[9px] md:text-[10px] font-bold"
-            role="list"
-            aria-label="Time slots"
-          >
-            {timeSlots.map((slot, index) => (
-              <span key={index} role="listitem">
-                {slot.time}
-              </span>
-            ))}
+        {loading ? (
+          <div className="text-center py-8">
+            <p className="text-[#8e8fa0] text-sm">Memuat data...</p>
           </div>
-        </div>
+        ) : error ? (
+          <div className="text-center py-8">
+            <p className="text-red-500 text-sm">{error}</p>
+          </div>
+        ) : events.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-[#8e8fa0] text-sm">Tidak ada event untuk periode ini</p>
+          </div>
+        ) : (
+          (() => {
+            // Kelompokkan events berdasarkan tanggal
+            const eventsByDate = events.reduce((acc, event) => {
+              if (!acc[event.date]) {
+                acc[event.date] = [];
+              }
+              acc[event.date].push(event);
+              return acc;
+            }, {} as Record<string, typeof events>);
 
-        <time
-          className="block text-center text-[#53599b] text-[10px] md:text-xs font-bold"
-          dateTime="2024-12-22"
-        >
-          December, 22
-        </time>
+            return Object.entries(eventsByDate).map(([date, dateEvents], dateIndex) => (
+              <div key={date} className="mb-4 md:mb-5 last:mb-0">
+                {dateEvents.map((event, eventIndex) => (
+                  <div key={event.id} className={eventIndex > 0 ? "mt-4 md:mt-5" : ""}>
+                    <div
+                      className="bg-[#dbdefc] rounded-[8px] md:rounded-[10px] p-2 md:p-3 mb-3 md:mb-4"
+                      role="article"
+                      aria-label="Calendar event"
+                    >
+                      <p className="text-[#53599b] text-sm md:text-[15px] font-bold text-center">
+                        {event.title}
+                      </p>
+                    </div>
+
+                    <div
+                      className="h-0.5 bg-[#8e8fa0cc] rounded-full mb-3 md:mb-4"
+                      role="separator"
+                      aria-hidden="true"
+                    />
+
+                    {event.timeSlots.length > 0 && (
+                      <div className="relative mb-3 md:mb-4">
+                        <div
+                          className="flex justify-between text-[#8e8fa0cc] text-[9px] md:text-[10px] font-bold"
+                          role="list"
+                          aria-label="Time slots"
+                        >
+                          {event.timeSlots.map((slot, index) => (
+                            <span key={index} role="listitem">
+                              {slot.formatted}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Hanya tampilkan tanggal sekali di akhir grup events dengan tanggal yang sama */}
+                <time
+                  className="block text-center text-[#53599b] text-[10px] md:text-xs font-bold"
+                  dateTime={date}
+                >
+                  {dateEvents[0].formattedDate}
+                </time>
+              </div>
+            ));
+          })()
+        )}
       </div>
     </section>
   );

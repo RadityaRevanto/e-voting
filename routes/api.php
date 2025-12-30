@@ -101,6 +101,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:paslon')->prefix('paslon')->group(function () {
         Route::get('/', [PaslonController::class, 'test']);
         Route::post('/update-visi-misi', [PaslonController::class, 'updateVisiMisi']);
+        
+        // Voting Process (bisa diakses paslon juga)
+        Route::get('/vote/voting-process', [VoteController::class, 'votingProcess']);
     });
 
     // Voter only
