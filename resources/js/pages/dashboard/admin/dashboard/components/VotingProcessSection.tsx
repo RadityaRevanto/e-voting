@@ -1,9 +1,26 @@
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useVotingProcess } from "@/hooks/use-voting-process";
 
 export const VotingProcessSection: React.FC = () => {
-  const { statistics, loading, error } = useVotingProcess();
+  const { 
+    statistics, 
+    loading, 
+    error, 
+    fetchVotingProcess,
+    totalRegistered,
+    totalVotes,
+    totalGolput
+  } = useVotingProcess();
+
+  const handleRetry = React.useCallback(async () => {
+    await fetchVotingProcess();
+  }, [fetchVotingProcess]);
+
+  const handleRefresh = React.useCallback(async () => {
+    await fetchVotingProcess();
+  }, [fetchVotingProcess]);
 
   return (
     <Card
@@ -11,22 +28,92 @@ export const VotingProcessSection: React.FC = () => {
       aria-labelledby="voting-process-title"
     >
       <CardHeader className="pb-4 md:pb-5 xl:pb-7">
-        <CardTitle
-          id="voting-process-title"
-          className="text-[#53599b] text-lg md:text-xl font-bold"
-        >
-          Voting Process
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle
+            id="voting-process-title"
+            className="text-[#53599b] text-lg md:text-xl font-bold"
+          >
+            Voting Process
+          </CardTitle>
+          {!loading && !error && statistics.length > 0 && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleRefresh}
+              className="text-[#53599b] hover:text-[#53599b] hover:bg-[#53599b]/10"
+              aria-label="Refresh data"
+              title="Refresh data"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                <path d="M3 21v-5h5" />
+              </svg>
+            </Button>
+          )}
+        </div>
       </CardHeader>
 
       <CardContent>
         {loading ? (
-          <div className="flex items-center justify-center py-8">
+          <div className="flex flex-col items-center justify-center py-8 space-y-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#53599b]"></div>
             <p className="text-[#53599b] text-sm">Memuat data...</p>
           </div>
         ) : error ? (
-          <div className="flex items-center justify-center py-8">
-            <p className="text-red-500 text-sm">{error}</p>
+          <div className="flex flex-col items-center justify-center py-8 space-y-4">
+            <div className="flex flex-col items-center space-y-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-red-500"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <p className="text-red-500 text-sm text-center max-w-xs">{error}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRetry}
+              className="text-[#53599b] border-[#53599b] hover:bg-[#53599b] hover:text-white"
+            >
+              Coba Lagi
+            </Button>
+          </div>
+        ) : statistics.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 space-y-4">
+            <p className="text-[#53599b] text-sm text-center">
+              Tidak ada data voting process
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              className="text-[#53599b] border-[#53599b] hover:bg-[#53599b] hover:text-white"
+            >
+              Muat Ulang
+            </Button>
           </div>
         ) : (
           <div className="space-y-5 md:space-y-6 xl:space-y-8">

@@ -1,5 +1,6 @@
 import { useCallback, useState, useEffect } from "react";
 import { apiClient } from "../lib/api-client";
+import { getActiveRole } from "../lib/auth-storage";
 
 export interface VotingStatistic {
   id: number;
@@ -52,7 +53,13 @@ export function useVotingProcess(
       setLoading(true);
       setError(null);
 
-      const response = await apiClient.get("/api/admin/vote/voting-process");
+      // Deteksi role untuk menentukan endpoint yang sesuai
+      const activeRole = getActiveRole();
+      const endpoint = activeRole === 'paslon' 
+        ? "/api/paslon/vote/voting-process"
+        : "/api/admin/vote/voting-process";
+
+      const response = await apiClient.get(endpoint);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
