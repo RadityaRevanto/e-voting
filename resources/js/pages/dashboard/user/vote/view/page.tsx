@@ -33,16 +33,8 @@ export default function UserVoteViewPage() {
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-6 md:mb-8">
-            <Link
-              href="/user/vote"
-              className="inline-flex items-center gap-2 text-[#53589a] hover:text-[#3a3f6b] transition-colors mb-4 group"
-            >
-              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-              <span className="font-semibold text-sm md:text-base">Kembali ke Halaman Vote</span>
-            </Link>
-            
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+              <div className="flex-1">
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#53589a] mb-2">
                   Profil Paslon
                 </h1>
@@ -50,6 +42,13 @@ export default function UserVoteViewPage() {
                   Detail informasi ketua dan wakil paslon yang Anda pilih
                 </p>
               </div>
+              <Link
+                href="/user/vote"
+                className="inline-flex items-center gap-2 text-[#53589a] hover:text-[#3a3f6b] transition-colors group"
+              >
+                <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                <span className="font-semibold text-sm md:text-base">Kembali ke Halaman Vote</span>
+              </Link>
             </div>
           </div>
 
