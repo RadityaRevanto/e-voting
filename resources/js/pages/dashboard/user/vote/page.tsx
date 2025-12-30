@@ -35,7 +35,7 @@ export default function UserVotePage() {
 
   return (
     <UserDashboardlayout>
-      <div className="bg-white w-full min-h-screen flex flex-col items-center py-8 sm:py-12 md:py-16 px-4">
+      <div className="bg-white w-full min-h-screen flex flex-col items-center pt-4 sm:pt-6 md:pt-8 pb-8 sm:pb-12 md:pb-16 px-4">
         <QRScannerDialog
           open={showQrScanner && !isQrScanned}
           onOpenChange={(open) => {
@@ -57,7 +57,7 @@ export default function UserVotePage() {
 
         <VoteHeader isQrScanned={isQrScanned} />
 
-        <main className="flex flex-col items-center w-full max-w-7xl mx-auto">
+        <main className="flex flex-col items-center w-full max-w ">
           <ElectionTitle />
 
           {loading && (
