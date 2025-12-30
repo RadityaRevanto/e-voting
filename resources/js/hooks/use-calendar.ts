@@ -236,7 +236,7 @@ export function useCalendar(
     useState<CalendarPeriod>(defaultPeriod);
 
   const fetchCalendar = useCallback(
-    async (params?: CalendarFilterParams) => {
+    async (params?: CalendarFilterParams): Promise<void> => {
       try {
         setLoading(true);
         setError(null);
@@ -247,9 +247,10 @@ export function useCalendar(
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(
-            errorData.message || "Gagal mengambil data schedule"
-          );
+          const errorMessage = typeof errorData === 'object' && errorData !== null && 'message' in errorData
+            ? String(errorData.message)
+            : "Gagal mengambil data schedule";
+          throw new Error(errorMessage);
         }
 
         const data: ScheduleApiResponse = await response.json();
@@ -267,9 +268,34 @@ export function useCalendar(
         if (data.data === null) {
           schedules = [];
         } else if (Array.isArray(data.data)) {
-          schedules = data.data;
+          // Validasi setiap item dalam array
+          schedules = data.data.filter((item): item is ScheduleFromBackend => {
+            return (
+              typeof item === 'object' &&
+              item !== null &&
+              typeof item.id === 'number' &&
+              typeof item.title === 'string' &&
+              typeof item.start_time === 'string' &&
+              typeof item.end_time === 'string' &&
+              typeof item.tag === 'string'
+            );
+          });
+        } else if (typeof data.data === 'object' && data.data !== null) {
+          // Validasi single object
+          const item = data.data as ScheduleFromBackend;
+          if (
+            typeof item.id === 'number' &&
+            typeof item.title === 'string' &&
+            typeof item.start_time === 'string' &&
+            typeof item.end_time === 'string' &&
+            typeof item.tag === 'string'
+          ) {
+            schedules = [item];
+          } else {
+            schedules = [];
+          }
         } else {
-          schedules = [data.data];
+          schedules = [];
         }
 
         const transformedEvents: CalendarEvent[] = schedules.map(
@@ -283,12 +309,11 @@ export function useCalendar(
         );
 
         setEvents(filteredEvents);
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Error fetching calendar:", err);
-        const errorMessage =
-          err instanceof Error
-            ? err.message
-            : "Terjadi kesalahan saat mengambil data schedule";
+        const errorMessage = err instanceof Error
+          ? err.message
+          : "Terjadi kesalahan saat mengambil data schedule";
 
         setError(errorMessage);
         setEvents([]);
@@ -318,7 +343,7 @@ export function useCalendar(
     if (autoFetch) {
       fetchCalendar({ period: selectedPeriod });
     }
-  }, [autoFetch]);
+  }, [autoFetch, fetchCalendar, selectedPeriod]);
 
   return {
     events,

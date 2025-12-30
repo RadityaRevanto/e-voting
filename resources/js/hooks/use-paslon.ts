@@ -26,7 +26,7 @@ interface ApiResponse {
 interface DeleteApiResponse {
     success: boolean;
     message: string;
-    data?: any;
+    data?: unknown;
 }
 
 interface UsePaslonResult {
@@ -48,7 +48,7 @@ export function usePaslon(autoFetch: boolean = true): UsePaslonResult {
     const [error, setError] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
 
-    const fetchPaslon = useCallback(async () => {
+    const fetchPaslon = useCallback(async (): Promise<void> => {
         try {
             setLoading(true);
             setError(null);
@@ -57,23 +57,39 @@ export function usePaslon(autoFetch: boolean = true): UsePaslonResult {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || "Gagal mengambil data paslon");
+                const errorMessage = typeof errorData === 'object' && errorData !== null && 'message' in errorData
+                    ? String(errorData.message)
+                    : "Gagal mengambil data paslon";
+                throw new Error(errorMessage);
             }
 
             const data: ApiResponse = await response.json();
 
-            if (data.success && data.data) {
-                setPaslonList(data.data);
-            } else {
+            // Validasi response structure
+            if (!data.success || !Array.isArray(data.data)) {
                 setPaslonList([]);
+                return;
             }
-        } catch (err) {
+
+            // Validasi setiap item dalam array
+            const validPaslonList: Paslon[] = data.data.filter((item): item is Paslon => {
+                return (
+                    typeof item === 'object' &&
+                    item !== null &&
+                    typeof item.id === 'number' &&
+                    typeof item.nama_ketua === 'string' &&
+                    typeof item.nama_wakil_ketua === 'string'
+                );
+            });
+
+            setPaslonList(validPaslonList);
+        } catch (err: unknown) {
             console.error("Error fetching paslon:", err);
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : "Terjadi kesalahan saat mengambil data paslon"
-            );
+            const errorMessage = err instanceof Error
+                ? err.message
+                : "Terjadi kesalahan saat mengambil data paslon";
+            
+            setError(errorMessage);
             setPaslonList([]);
         } finally {
             setLoading(false);
@@ -82,7 +98,8 @@ export function usePaslon(autoFetch: boolean = true): UsePaslonResult {
 
     const deletePaslon = useCallback(
         async (id: number): Promise<boolean> => {
-            if (!id) {
+            // Validasi input: id harus berupa number positif
+            if (typeof id !== 'number' || !Number.isInteger(id) || id <= 0) {
                 setError("ID paslon tidak valid");
                 return false;
             }
@@ -95,9 +112,10 @@ export function usePaslon(autoFetch: boolean = true): UsePaslonResult {
 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
-                    throw new Error(
-                        errorData.message || "Gagal menghapus paslon"
-                    );
+                    const errorMessage = typeof errorData === 'object' && errorData !== null && 'message' in errorData
+                        ? String(errorData.message)
+                        : "Gagal menghapus paslon";
+                    throw new Error(errorMessage);
                 }
 
                 const data: DeleteApiResponse = await response.json();
@@ -110,13 +128,13 @@ export function usePaslon(autoFetch: boolean = true): UsePaslonResult {
                 setPaslonList((prev) => prev.filter((p) => p.id !== id));
                 setDeletingId(null);
                 return true;
-            } catch (err) {
+            } catch (err: unknown) {
                 console.error("Error deleting paslon:", err);
-                setError(
-                    err instanceof Error
-                        ? err.message
-                        : "Terjadi kesalahan saat menghapus paslon"
-                );
+                const errorMessage = err instanceof Error
+                    ? err.message
+                    : "Terjadi kesalahan saat menghapus paslon";
+                
+                setError(errorMessage);
                 setDeletingId(null);
                 return false;
             }

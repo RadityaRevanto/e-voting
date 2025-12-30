@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getCurrentUser, type UserData } from '@/lib/auth-service';
 
 interface UseCurrentUserReturn {
@@ -17,23 +17,34 @@ export function useCurrentUser(): UseCurrentUserReturn {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
-      const userData = await getCurrentUser();
+      
+      const userData: UserData = await getCurrentUser();
+      
+      // Validasi runtime untuk memastikan data user valid
+      if (!userData || typeof userData.id !== 'number' || !userData.email || !userData.name) {
+        throw new Error('Data user tidak valid');
+      }
+      
       setUser(userData);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Gagal mengambil data user'));
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : 'Gagal mengambil data user';
+      
+      setError(new Error(errorMessage));
       setUser(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUser();
-  }, []);
+  }, [fetchUser]);
 
   return {
     user,
