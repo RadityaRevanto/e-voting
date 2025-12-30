@@ -518,4 +518,83 @@ class AuthController extends Controller
             return HttpStatus::code500($th->getMessage());
         }
     }
+
+    public function createAdmin(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email|max:255|unique:users,email',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            $name = explode('@', $request->email)[0];
+
+            // Create admin user
+            $user = User::create([
+                'name' => $name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'role' => 'admin',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Akun admin berhasil dibuat',
+                'data' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                ],
+            ], 201);
+
+        } catch (\Throwable $th) {
+            return HttpStatus::code500($th->getMessage());
+        }
+    }
+    
+    public function changePassword(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'old_password' => "required",
+            'password' => "required|string|min:8",
+            'confirm_password' => "required|string|min:8",
+        ]);
+        if ($validator->fails()) return HttpStatus::code422();
+
+        try {
+            $user = $request->user();
+            if (!$user) return HttpStatus::code401();
+
+            if (!Hash::check($request->old_password, $user->password)) {
+                return HttpStatus::code400("Password lama salah");
+            }
+
+            if ($request->password !== $request->confirm_password) {
+                return HttpStatus::code400("Password konfirmasi tidak sesuai");
+            }
+
+            if (Hash::check($request->password, $user->password)) {
+                return HttpStatus::code400("Password baru tidak boleh sama dengan password lama");
+            }
+            
+            $user->password = Hash::make($request->password);
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Password telah diganti",
+                'data' => [],
+            ], 200);
+        } catch (\Throwable $th) {
+            return HttpStatus::code500($th->getMessage());
+        }
+    }
 }

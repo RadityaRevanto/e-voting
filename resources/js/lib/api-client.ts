@@ -1,235 +1,195 @@
-import { authStorage } from './auth-storage';
+import * as authStorage from './auth-storage';
 
-/**
- * Response dari API refresh token
- */
-interface RefreshTokenResponse {
-    success: boolean;
-    message: string;
-    data: {
-        access_token: string;
-        token_type: string;
-        expires_in: number;
-    };
-}
-
-/**
- * Flag untuk mencegah multiple refresh request bersamaan
- */
+// Flag untuk mencegah multiple refresh token bersamaan
 let isRefreshing = false;
 let refreshPromise: Promise<string> | null = null;
 
 /**
- * Refresh access token menggunakan refresh token
+ * Refresh access token menggunakan refresh token untuk role aktif
+ * @param role Role yang ingin di-refresh (opsional, default: active role)
+ * @returns Promise yang resolve dengan access token baru
  */
-async function refreshAccessToken(): Promise<string> {
-    const refreshToken = authStorage.getRefreshToken();
+export const refreshAccessToken = async (role?: authStorage.UserRole): Promise<string> => {
+  // Jika sedang refresh, kembalikan promise yang sama
+  if (isRefreshing && refreshPromise) {
+    return refreshPromise;
+  }
 
-    if (!refreshToken) {
-        throw new Error('Refresh token tidak ditemukan');
-    }
+  const targetRole = role || authStorage.getActiveRole();
+  if (!targetRole) {
+    throw new Error('Role tidak tersedia');
+  }
 
+  const refreshToken = authStorage.getRefreshToken(targetRole);
+  if (!refreshToken) {
+    throw new Error('Refresh token tidak tersedia');
+  }
+
+  isRefreshing = true;
+  refreshPromise = (async () => {
     try {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
 
-        const response = await fetch('/api/auth/refresh', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-            },
-            body: JSON.stringify({
-                refresh_token: refreshToken,
-            }),
-        });
+      const data = await response.json();
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) {
+        // Refresh gagal, bersihkan token untuk role tersebut
+        authStorage.clearTokens(targetRole);
+        throw new Error(data.message || 'Refresh token gagal');
+      }
 
-            // Jika refresh token juga expired atau invalid, clear semua token
-            if (response.status === 401) {
-                authStorage.clearTokens();
-                // Redirect ke login jika diperlukan
-                if (window.location.pathname !== '/login') {
-                    window.location.href = '/login';
-                }
-            }
+      // Update access token baru untuk role tersebut
+      const { access_token, expires_in } = data.data;
+      authStorage.updateAccessToken(access_token, expires_in, targetRole);
 
-            throw new Error(errorData.message || 'Gagal refresh token');
-        }
-
-        const data: RefreshTokenResponse = await response.json();
-
-        if (data.success && data.data.access_token) {
-            // Update access token di storage
-            authStorage.updateAccessToken(
-                data.data.access_token,
-                data.data.expires_in
-            );
-
-            return data.data.access_token;
-        }
-
-        throw new Error('Format response tidak valid');
-    } catch (error) {
-        authStorage.clearTokens();
-        throw error;
+      return access_token;
+    } finally {
+      // Reset flag setelah selesai
+      isRefreshing = false;
+      refreshPromise = null;
     }
-}
+  })();
+
+  return refreshPromise;
+};
 
 /**
- * API Client dengan interceptor untuk handle token refresh otomatis
+ * Wrapper fetch untuk semua request API dengan autentikasi otomatis
+ * Menggunakan token berdasarkan active role
+ * @param url URL endpoint (relative atau absolute)
+ * @param options Request options (headers, body, dll)
+ * @returns Promise<Response>
  */
-export const apiClient = {
-    /**
-     * Fetch dengan automatic token refresh
-     */
-    async fetch(
-        url: string,
-        options: RequestInit = {}
-    ): Promise<Response> {
-        // Cek apakah token sudah expired atau akan expired
-        const isExpired = authStorage.isTokenExpired(60); // Buffer 60 detik
+export const apiFetch = async (
+  url: string,
+  options: RequestInit = {},
+): Promise<Response> => {
+  // Ambil active role
+  const activeRole = authStorage.getActiveRole();
+  
+  // Jika tidak ada active role, lakukan request tanpa token
+  if (!activeRole) {
+    const headers = new Headers(options.headers);
+    const isFormDataBody =
+      typeof FormData !== 'undefined' && options.body instanceof FormData;
 
-        // Jika token expired, refresh terlebih dahulu
-        if (isExpired && authStorage.getRefreshToken()) {
-            // Jika sedang refresh, tunggu promise yang sudah ada
-            if (isRefreshing && refreshPromise) {
-                try {
-                    await refreshPromise;
-                } catch (error) {
-                    // Jika refresh gagal, lanjutkan request dengan token lama
-                    // Server akan return 401 dan kita handle di bawah
-                }
-            } else {
-                // Mulai proses refresh
-                isRefreshing = true;
-                refreshPromise = refreshAccessToken();
+    if (options.body && !headers.has('Content-Type') && !isFormDataBody) {
+      headers.set('Content-Type', 'application/json');
+    }
 
-                try {
-                    await refreshPromise;
-                } catch (error) {
-                    // Jika refresh gagal, clear flag dan throw error
-                    isRefreshing = false;
-                    refreshPromise = null;
-                    throw error;
-                }
+    return fetch(url, {
+      ...options,
+      headers,
+    });
+  }
 
-                isRefreshing = false;
-                refreshPromise = null;
-            }
-        }
+  // Cek apakah token expired sebelum request
+  if (authStorage.isTokenExpired(60, activeRole)) {
+    const refreshToken = authStorage.getRefreshToken(activeRole);
+    if (refreshToken) {
+      // Refresh token jika tersedia
+      await refreshAccessToken(activeRole);
+    }
+  }
 
-        // Ambil access token terbaru
-        const accessToken = authStorage.getAccessToken();
+  // Ambil access token terbaru untuk active role
+  const accessToken = authStorage.getAccessToken(activeRole);
 
-        // Setup headers
-        const headers = new Headers(options.headers);
+  // Buat headers baru dari options yang ada
+  const headers = new Headers(options.headers);
 
-        // Tambahkan Authorization header jika ada token
-        if (accessToken) {
-            headers.set('Authorization', `Bearer ${accessToken}`);
-        }
+  // Tambahkan Authorization header jika token tersedia
+  if (accessToken) {
+    headers.set('Authorization', `Bearer ${accessToken}`);
+  }
 
-        // Tambahkan CSRF token jika diperlukan
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
-        if (csrfToken) {
-            headers.set('X-CSRF-TOKEN', csrfToken);
-        }
+  // Tambahkan Content-Type default hanya jika:
+  // - Ada body
+  // - Header Content-Type belum diset
+  // - Body BUKAN FormData (biarkan browser set boundary untuk multipart)
+  const isFormDataBody =
+    typeof FormData !== 'undefined' && options.body instanceof FormData;
 
-        // Set default headers (jangan set Content-Type jika FormData, browser akan set otomatis dengan boundary)
-        if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
-            headers.set('Content-Type', 'application/json');
-        }
-        if (!headers.has('Accept')) {
-            headers.set('Accept', 'application/json');
-        }
+  if (options.body && !headers.has('Content-Type') && !isFormDataBody) {
+    headers.set('Content-Type', 'application/json');
+  }
 
-        // Buat request dengan headers yang sudah diupdate
-        const requestOptions: RequestInit = {
+  // Buat request dengan headers yang sudah di-update
+  const requestOptions: RequestInit = {
+    ...options,
+    headers,
+  };
+
+  // Lakukan request
+  let response = await fetch(url, requestOptions);
+
+  // Handle 401 Unauthorized
+  if (response.status === 401) {
+    const refreshToken = authStorage.getRefreshToken(activeRole);
+    if (refreshToken) {
+      try {
+        // Coba refresh token untuk active role
+        await refreshAccessToken(activeRole);
+
+        // Ambil access token baru
+        const newAccessToken = authStorage.getAccessToken(activeRole);
+
+        if (newAccessToken) {
+          // Update Authorization header dengan token baru
+          headers.set('Authorization', `Bearer ${newAccessToken}`);
+
+          // Retry request dengan token baru
+          const retryOptions: RequestInit = {
             ...options,
             headers,
-        };
-
-        // Kirim request
-        let response = await fetch(url, requestOptions);
-
-        // Jika mendapat 401 Unauthorized, coba refresh token sekali lagi
-        if (response.status === 401 && authStorage.getRefreshToken()) {
-            try {
-                // Refresh token
-                const newAccessToken = await refreshAccessToken();
-
-                // Update Authorization header dengan token baru
-                headers.set('Authorization', `Bearer ${newAccessToken}`);
-
-                // Retry request dengan token baru
-                requestOptions.headers = headers;
-                response = await fetch(url, requestOptions);
-            } catch (refreshError) {
-                // Jika refresh gagal, clear tokens dan redirect ke login
-                authStorage.clearTokens();
-                if (window.location.pathname !== '/login') {
-                    window.location.href = '/login';
-                }
-                throw refreshError;
-            }
+          };
+          response = await fetch(url, retryOptions);
         }
+      } catch (error) {
+        // Refresh gagal, token sudah dibersihkan di refreshAccessToken
+        throw error;
+      }
+    }
+  }
 
-        return response;
-    },
+  return response;
+};
 
-    /**
-     * GET request
-     */
-    async get(url: string, options?: RequestInit): Promise<Response> {
-        return this.fetch(url, {
-            ...options,
-            method: 'GET',
-        });
-    },
+/**
+ * Helper sederhana berbasis apiFetch agar bisa dipanggil sebagai apiClient
+ * Digunakan di beberapa halaman (admin vote, vote guideline, dll).
+ */
+export const apiClient = {
+  get: (url: string, options: RequestInit = {}) => {
+    return apiFetch(url, { ...options, method: 'GET' });
+  },
 
-    /**
-     * POST request
-     */
-    async post(url: string, body?: any, options?: RequestInit): Promise<Response> {
-        return this.fetch(url, {
-            ...options,
-            method: 'POST',
-            body: body ? JSON.stringify(body) : undefined,
-        });
-    },
+  post: (url: string, body?: any, options: RequestInit = {}) => {
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
 
-    /**
-     * PUT request
-     */
-    async put(url: string, body?: any, options?: RequestInit): Promise<Response> {
-        return this.fetch(url, {
-            ...options,
-            method: 'PUT',
-            body: body ? JSON.stringify(body) : undefined,
-        });
-    },
+    const finalOptions: RequestInit = {
+      ...options,
+      method: 'POST',
+      body: isFormData ? body : body !== undefined ? JSON.stringify(body) : options.body,
+    };
 
-    /**
-     * PATCH request
-     */
-    async patch(url: string, body?: any, options?: RequestInit): Promise<Response> {
-        return this.fetch(url, {
-            ...options,
-            method: 'PATCH',
-            body: body ? JSON.stringify(body) : undefined,
-        });
-    },
+    return apiFetch(url, finalOptions);
+  },
 
-    /**
-     * DELETE request
-     */
-    async delete(url: string, options?: RequestInit): Promise<Response> {
-        return this.fetch(url, {
-            ...options,
-            method: 'DELETE',
-        });
-    },
+  delete: (url: string, options: RequestInit = {}) => {
+    return apiFetch(url, { ...options, method: 'DELETE' });
+  },
+
+  /**
+   * Passthrough ke apiFetch untuk kasus khusus (misalnya FormData, method kustom, dll)
+   */
+  fetch: (url: string, options: RequestInit = {}) => {
+    return apiFetch(url, options);
+  },
 };

@@ -40,11 +40,6 @@ interface UseAdminVoteGuidelinesResult {
   handleDragEnd: () => void;
 }
 
-function getCsrfToken() {
-  if (typeof document === "undefined") return "";
-  return document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "";
-}
-
 export function useAdminVoteGuidelines(): UseAdminVoteGuidelinesResult {
   const [guidelines, setGuidelines] = useState<Guideline[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,31 +56,58 @@ export function useAdminVoteGuidelines(): UseAdminVoteGuidelinesResult {
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
 
-  const fetchGuidelines = useCallback(async () => {
+  const fetchGuidelines = useCallback(async (): Promise<void> => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/vote-guidelines/", {
+      const response = await apiClient.get("/api/vote-guidelines/", {
         headers: {
           Accept: "application/json",
         },
       });
 
-      if (!response.ok) {
-        throw new Error("Gagal memuat guidelines");
-      }
-
       const data = await response.json();
-      if (data.success && data.data) {
-        setGuidelines(data.data);
-      } else {
+
+      if (!response.ok) {
+        const errorMessage = typeof data === 'object' && data !== null && 'message' in data
+          ? String(data.message)
+          : "Gagal memuat guidelines";
+        throw new Error(errorMessage);
+      }
+      
+      // Validasi response structure
+      if (!data || typeof data !== 'object' || !data.success) {
         throw new Error("Format data tidak valid");
       }
-    } catch (err) {
+
+      // Validasi data array
+      if (!Array.isArray(data.data)) {
+        throw new Error("Format data tidak valid");
+      }
+
+      // Validasi setiap guideline dalam array
+      const dataArray = data.data as unknown[];
+      const validGuidelines: Guideline[] = dataArray.filter((item: unknown): item is Guideline => {
+        if (typeof item !== 'object' || item === null) {
+          return false;
+        }
+        
+        const obj = item as Record<string, unknown>;
+        return (
+          typeof obj.id === 'number' &&
+          typeof obj.text === 'string'
+        );
+      });
+
+      setGuidelines(validGuidelines);
+    } catch (err: unknown) {
       console.error("Error fetching guidelines:", err);
-      setError(
-        err instanceof Error ? err.message : "Terjadi kesalahan saat memuat guidelines",
-      );
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : "Terjadi kesalahan saat memuat guidelines";
+      
+      setError(errorMessage);
+      setGuidelines([]);
     } finally {
       setLoading(false);
     }
@@ -96,32 +118,47 @@ export function useAdminVoteGuidelines(): UseAdminVoteGuidelinesResult {
   }, [fetchGuidelines]);
 
   const addGuideline = useCallback(
-    async (e?: React.FormEvent) => {
+    async (e?: React.FormEvent): Promise<void> => {
       e?.preventDefault();
-      if (!newGuideline.trim() || processing) return;
+      
+      // Validasi input
+      const trimmedGuideline = typeof newGuideline === 'string' ? newGuideline.trim() : '';
+      if (!trimmedGuideline || processing) {
+        return;
+      }
 
       setProcessing(true);
       setError(null);
       try {
         const response = await apiClient.post("/api/admin/vote-guidelines/create", {
-          text: newGuideline.trim(),
+          text: trimmedGuideline,
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.message || "Gagal menambahkan guideline");
+          const errorMessage = typeof data === 'object' && data !== null && 'message' in data
+            ? String(data.message)
+            : "Gagal menambahkan guideline";
+          throw new Error(errorMessage);
         }
 
         if (data.success) {
           setNewGuideline("");
           await fetchGuidelines();
+        } else {
+          const errorMessage = typeof data === 'object' && data !== null && 'message' in data
+            ? String(data.message)
+            : "Gagal menambahkan guideline";
+          throw new Error(errorMessage);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Error adding guideline:", err);
-        setError(
-          err instanceof Error ? err.message : "Terjadi kesalahan saat menambahkan guideline",
-        );
+        const errorMessage = err instanceof Error 
+          ? err.message 
+          : "Terjadi kesalahan saat menambahkan guideline";
+        
+        setError(errorMessage);
       } finally {
         setProcessing(false);
       }
@@ -140,33 +177,53 @@ export function useAdminVoteGuidelines(): UseAdminVoteGuidelinesResult {
   }, []);
 
   const updateGuideline = useCallback(
-    async (id: number, e?: React.FormEvent) => {
+    async (id: number, e?: React.FormEvent): Promise<void> => {
       e?.preventDefault();
-      if (!editingText.trim() || processing) return;
+      
+      // Validasi input
+      if (typeof id !== 'number' || !Number.isInteger(id) || id <= 0) {
+        setError("ID guideline tidak valid");
+        return;
+      }
+
+      const trimmedText = typeof editingText === 'string' ? editingText.trim() : '';
+      if (!trimmedText || processing) {
+        return;
+      }
 
       setProcessing(true);
       setError(null);
       try {
         const response = await apiClient.post(`/api/admin/vote-guidelines/${id}/update`, {
-          text: editingText.trim(),
+          text: trimmedText,
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.message || "Gagal mengupdate guideline");
+          const errorMessage = typeof data === 'object' && data !== null && 'message' in data
+            ? String(data.message)
+            : "Gagal mengupdate guideline";
+          throw new Error(errorMessage);
         }
 
         if (data.success) {
           setEditingId(null);
           setEditingText("");
           await fetchGuidelines();
+        } else {
+          const errorMessage = typeof data === 'object' && data !== null && 'message' in data
+            ? String(data.message)
+            : "Gagal mengupdate guideline";
+          throw new Error(errorMessage);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Error updating guideline:", err);
-        setError(
-          err instanceof Error ? err.message : "Terjadi kesalahan saat mengupdate guideline",
-        );
+        const errorMessage = err instanceof Error 
+          ? err.message 
+          : "Terjadi kesalahan saat mengupdate guideline";
+        
+        setError(errorMessage);
       } finally {
         setProcessing(false);
       }
@@ -182,8 +239,16 @@ export function useAdminVoteGuidelines(): UseAdminVoteGuidelinesResult {
     setDeleteConfirmId(null);
   }, []);
 
-  const confirmDelete = useCallback(async () => {
-    if (deleteConfirmId === null || processing) return;
+  const confirmDelete = useCallback(async (): Promise<void> => {
+    // Validasi input
+    if (deleteConfirmId === null || typeof deleteConfirmId !== 'number' || !Number.isInteger(deleteConfirmId) || deleteConfirmId <= 0) {
+      setError("ID guideline tidak valid");
+      return;
+    }
+
+    if (processing) {
+      return;
+    }
 
     setProcessing(true);
     setError(null);
@@ -195,18 +260,28 @@ export function useAdminVoteGuidelines(): UseAdminVoteGuidelinesResult {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Gagal menghapus guideline");
+        const errorMessage = typeof data === 'object' && data !== null && 'message' in data
+          ? String(data.message)
+          : "Gagal menghapus guideline";
+        throw new Error(errorMessage);
       }
 
       if (data.success) {
         setDeleteConfirmId(null);
         await fetchGuidelines();
+      } else {
+        const errorMessage = typeof data === 'object' && data !== null && 'message' in data
+          ? String(data.message)
+          : "Gagal menghapus guideline";
+        throw new Error(errorMessage);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Error deleting guideline:", err);
-      setError(
-        err instanceof Error ? err.message : "Terjadi kesalahan saat menghapus guideline",
-      );
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : "Terjadi kesalahan saat menghapus guideline";
+      
+      setError(errorMessage);
     } finally {
       setProcessing(false);
     }

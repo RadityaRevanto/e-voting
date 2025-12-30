@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('activity_logs', function (Blueprint $table) {
+        Schema::create('schedules', function (Blueprint $table) {
             $table->id();
-            $table->string('session');
-            $table->text('info');
-            $table->string('context', 20);
-            $table->enum('subject', ['superadmin', 'admin', 'paslon', 'voter']);
-            $table->timestamp('created_at');
+            $table->string('title', 100);
+            $table->datetime('start_time');
+            $table->datetime('end_time');
+            $table->enum('tag', ['registration', 'voting', 'announcement'])->unique();
+            $table->timestamps();
         });
     }
 
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('activity_logs');
+        Schema::dropIfExists('schedules');
     }
 };

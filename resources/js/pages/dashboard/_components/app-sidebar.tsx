@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { usePage } from "@inertiajs/react"
 import { isSameUrl } from "@/lib/utils"
+import { useCurrentUser } from "@/hooks/use-current-user"
 
 import { NavMain } from "@/pages/dashboard/_components/nav-main"
 import { NavUserProfile } from "@/pages/dashboard/_components/nav-user-profile"
@@ -53,20 +54,26 @@ const navItems = [
   },
 ]
 
-const userData = {
-  name: "Aditya Eka",
-  email: "aditya@example.com",
-  avatar: "/avatars/shadcn.jpg",
-}
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const page = usePage()
   const currentUrl = page.url
+  const { user, loading } = useCurrentUser()
 
   const navMain = navItems.map((item) => ({
     ...item,
     isActive: isSameUrl(currentUrl, item.url),
   }))
+
+  // Default user data jika masih loading atau error
+  const userData = user ? {
+    name: user.name,
+    email: user.email,
+    avatar: "/avatars/shadcn.jpg", // Default avatar, bisa diganti jika ada di API
+  } : {
+    name: "User",
+    email: "",
+    avatar: "/avatars/shadcn.jpg",
+  }
 
   return (
     <Sidebar 
@@ -76,7 +83,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {...props}
     >
       <SidebarHeader className="border-b-0">
-        <NavUserProfile user={userData} />
+        {loading ? (
+          <div className="flex flex-col items-center px-4 py-6">
+            <div className="h-20 w-20 rounded-full bg-gray-200 animate-pulse mb-3" />
+            <div className="h-6 w-32 bg-gray-200 animate-pulse rounded mb-1 mt-3" />
+          </div>
+        ) : (
+          <NavUserProfile user={userData} />
+        )}
       </SidebarHeader>
       <SidebarContent className="px-2 group-data-[collapsible=icon]:px-1">
         <NavMain items={navMain} />

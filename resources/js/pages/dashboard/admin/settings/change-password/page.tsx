@@ -1,105 +1,22 @@
 import AdminDashboardlayout from "../../../_components/adminlayout";
-import { useState, FormEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import InputError from "@/pages/dashboard/_components/input-error";
+import { useChangePassword } from "@/hooks/use-change-password";
 
 export default function AdminChangePasswordPage() {
-    const [currentPassword, setCurrentPassword] = useState("");
-    const [password, setPassword] = useState("");
-    const [passwordConfirmation, setPasswordConfirmation] = useState("");
-    const [errors, setErrors] = useState<{
-        current_password?: string;
-        password?: string;
-        password_confirmation?: string;
-        message?: string;
-    }>({});
-    const [success, setSuccess] = useState("");
-    const [processing, setProcessing] = useState(false);
-
-    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setErrors({});
-        setSuccess("");
-        setProcessing(true);
-
-        // Validasi client-side
-        if (!currentPassword || !password || !passwordConfirmation) {
-            setErrors({
-                message: "Semua field harus diisi",
-            });
-            setProcessing(false);
-            return;
-        }
-
-        if (password !== passwordConfirmation) {
-            setErrors({
-                password_confirmation: "Konfirmasi password tidak cocok",
-            });
-            setProcessing(false);
-            return;
-        }
-
-        if (password.length < 8) {
-            setErrors({
-                password: "Password minimal 8 karakter",
-            });
-            setProcessing(false);
-            return;
-        }
-
-        try {
-            const csrfToken = document
-                .querySelector('meta[name="csrf-token"]')
-                ?.getAttribute("content") || "";
-
-            const response = await fetch("/settings/password", {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": csrfToken,
-                    "Accept": "application/json",
-                },
-                body: JSON.stringify({
-                    current_password: currentPassword,
-                    password: password,
-                    password_confirmation: passwordConfirmation,
-                }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                if (data.errors) {
-                    setErrors(data.errors);
-                } else if (data.message) {
-                    setErrors({ message: data.message });
-                } else {
-                    setErrors({ message: "Terjadi kesalahan saat mengubah password" });
-                }
-                setProcessing(false);
-                return;
-            }
-
-            setSuccess("Password berhasil diubah!");
-            setCurrentPassword("");
-            setPassword("");
-            setPasswordConfirmation("");
-            setErrors({});
-
-            // Reset success message setelah 5 detik
-            setTimeout(() => {
-                setSuccess("");
-            }, 5000);
-        } catch (error) {
-            console.error("Error changing password:", error);
-            setErrors({
-                message: "Terjadi kesalahan saat mengubah password. Silakan coba lagi.",
-            });
-        } finally {
-            setProcessing(false);
-        }
-    };
+    const {
+        currentPassword,
+        password,
+        passwordConfirmation,
+        errors,
+        success,
+        processing,
+        setCurrentPassword,
+        setPassword,
+        setPasswordConfirmation,
+        handleSubmit,
+    } = useChangePassword();
 
     return (
         <AdminDashboardlayout>
@@ -139,9 +56,9 @@ export default function AdminChangePasswordPage() {
                                 onChange={(e) => setCurrentPassword(e.target.value)}
                                 className="w-full"
                                 disabled={processing}
-                                aria-invalid={errors.current_password ? "true" : "false"}
+                                aria-invalid={errors.old_password ? "true" : "false"}
                             />
-                            <InputError message={errors.current_password} />
+                            <InputError message={errors.old_password} />
                         </div>
 
                         <div className="space-y-2">
@@ -180,9 +97,9 @@ export default function AdminChangePasswordPage() {
                                 onChange={(e) => setPasswordConfirmation(e.target.value)}
                                 className="w-full"
                                 disabled={processing}
-                                aria-invalid={errors.password_confirmation ? "true" : "false"}
+                                aria-invalid={errors.confirm_password ? "true" : "false"}
                             />
-                            <InputError message={errors.password_confirmation} />
+                            <InputError message={errors.confirm_password} />
                         </div>
 
                         <div className="flex gap-4 pt-4">
