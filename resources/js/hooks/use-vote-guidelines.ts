@@ -409,4 +409,91 @@ export function useAdminVoteGuidelines(): UseAdminVoteGuidelinesResult {
   );
 }
 
+interface UseVoteGuidelinesResult {
+  guidelines: Guideline[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+}
+
+/**
+ * Hook untuk user untuk menampilkan vote guidelines (read-only)
+ * Mengambil data dari endpoint public /api/vote-guidelines/
+ */
+export function useVoteGuidelines(): UseVoteGuidelinesResult {
+  const [guidelines, setGuidelines] = useState<Guideline[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchGuidelines = useCallback(async (): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.get("/api/vote-guidelines/", {
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errorMessage = typeof data === 'object' && data !== null && 'message' in data
+          ? String(data.message)
+          : "Gagal memuat guidelines";
+        throw new Error(errorMessage);
+      }
+      
+      // Validasi response structure
+      if (!data || typeof data !== 'object' || !data.success) {
+        throw new Error("Format data tidak valid");
+      }
+
+      // Validasi data array
+      if (!Array.isArray(data.data)) {
+        throw new Error("Format data tidak valid");
+      }
+
+      // Validasi setiap guideline dalam array
+      const dataArray = data.data as unknown[];
+      const validGuidelines: Guideline[] = dataArray.filter((item: unknown): item is Guideline => {
+        if (typeof item !== 'object' || item === null) {
+          return false;
+        }
+        
+        const obj = item as Record<string, unknown>;
+        return (
+          typeof obj.id === 'number' &&
+          typeof obj.text === 'string'
+        );
+      });
+
+      setGuidelines(validGuidelines);
+    } catch (err: unknown) {
+      console.error("Error fetching guidelines:", err);
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : "Terjadi kesalahan saat memuat guidelines";
+      
+      setError(errorMessage);
+      setGuidelines([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchGuidelines();
+  }, [fetchGuidelines]);
+
+  return useMemo(
+    () => ({
+      guidelines,
+      loading,
+      error,
+      refetch: fetchGuidelines,
+    }),
+    [guidelines, loading, error, fetchGuidelines],
+  );
+}
 
