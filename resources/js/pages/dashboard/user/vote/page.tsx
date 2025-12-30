@@ -13,11 +13,13 @@ import { AlertCircle } from "lucide-react";
 
 export default function UserVotePage() {
   const {
-    selectedCandidate,
+    selectedCandidateId,
     isQrScanned,
     showQrScanner,
     scannerError,
     isScanning,
+    isSubmittingVote,
+    error,
     fileInputRef,
     handleVote,
     handleSubmit,
@@ -29,8 +31,7 @@ export default function UserVotePage() {
     QR_CODE_REGION_ID,
   } = useVotePage();
 
-  // Fetch candidates dari backend
-  const { candidates, loading, error } = useVoterPaslon();
+  const { candidates, loading, error: paslonError } = useVoterPaslon();
 
   return (
     <UserDashboardlayout>
@@ -68,16 +69,25 @@ export default function UserVotePage() {
             </div>
           )}
 
-          {error && (
+          {(paslonError || error) && (
             <Alert variant="destructive" className="max-w-2xl mb-4 w-full">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                {error}
+                {error || paslonError}
               </AlertDescription>
             </Alert>
           )}
 
-          {!loading && !error && candidates.length === 0 && (
+          {scannerError && (
+            <Alert variant="destructive" className="max-w-2xl mb-4 w-full">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {scannerError}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {!loading && !paslonError && candidates.length === 0 && (
             <Alert className="max-w-2xl mb-4 w-full">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
@@ -90,14 +100,14 @@ export default function UserVotePage() {
             <>
               <CandidatesList
                 candidates={candidates}
-                selectedCandidate={selectedCandidate}
+                selectedCandidate={selectedCandidateId}
                 isQrScanned={isQrScanned}
                 onVote={handleVote}
                 onOpenScanner={handleOpenScanner}
               />
 
               <SubmitVoteButton
-                disabled={selectedCandidate === null || !isQrScanned}
+                disabled={selectedCandidateId === null || !isQrScanned || isSubmittingVote}
                 onSubmit={() => handleSubmit(candidates)}
               />
             </>
