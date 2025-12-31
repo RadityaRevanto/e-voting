@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getCurrentUser, type UserData } from '@/lib/auth-service';
+import { validateRole } from '@/lib/authorization';
 
 interface UseCurrentUserReturn {
   user: UserData | null;
@@ -29,7 +30,23 @@ export function useCurrentUser(): UseCurrentUserReturn {
         throw new Error('Data user tidak valid');
       }
       
-      setUser(userData);
+      // Validasi role menggunakan helper terpusat
+      const validatedRole = validateRole(userData.role);
+      if (!validatedRole) {
+        // Logging untuk development
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[AUTH] Invalid role from API:', userData.role);
+        }
+        throw new Error('Role user tidak valid');
+      }
+      
+      // Pastikan role yang disimpan adalah role yang sudah divalidasi
+      const validatedUserData: UserData = {
+        ...userData,
+        role: validatedRole,
+      };
+      
+      setUser(validatedUserData);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error 
         ? err.message 
