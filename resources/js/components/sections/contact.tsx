@@ -34,69 +34,6 @@ export default function Contact() {
                         </button>
                     </form>
                 </div>
-
-                {/* Right: Features */}
-                <div className="grid w-full max-w-xl grid-cols-1 gap-6 md:grid-cols-2">
-                    {/* Card 1 */}
-                    <div className="flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500">
-                            <span className="text-lg font-semibold">II</span>
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-semibold text-slate-900 md:text-base">
-                                Responsive
-                            </h3>
-                            <p className="mt-1 text-xs leading-relaxed text-slate-500 md:text-sm">
-                                Sometimes features require a short description.
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Card 2 */}
-                    <div className="flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500">
-                            <span className="text-lg font-semibold">A</span>
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-semibold text-slate-900 md:text-base">
-                                Secured Platform
-                            </h3>
-                            <p className="mt-1 text-xs leading-relaxed text-slate-500 md:text-sm">
-                                Sometimes features require a short description.
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Card 3 */}
-                    <div className="flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500">
-                            <span className="text-lg font-semibold">▢</span>
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-semibold text-slate-900 md:text-base">
-                                Real Time Result
-                            </h3>
-                            <p className="mt-1 text-xs leading-relaxed text-slate-500 md:text-sm">
-                                Sometimes features require a short description.
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Card 4 */}
-                    <div className="flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500">
-                            <span className="text-lg font-semibold">▢</span>
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-semibold text-slate-900 md:text-base">
-                                Real Time Vote
-                            </h3>
-                            <p className="mt-1 text-xs leading-relaxed text-slate-500 md:text-sm">
-                                Sometimes features require a short description.
-                            </p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </section>
     );
