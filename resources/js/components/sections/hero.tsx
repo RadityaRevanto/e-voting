@@ -4,6 +4,27 @@ export default function Hero() {
             id="hero"
             className="relative mt-20 min-h-screen w-full bg-white"
         >
+            <style>{`
+                @keyframes float {
+                    0%, 100% {
+                        transform: translateY(0px);
+                    }
+                    50% {
+                        transform: translateY(-20px);
+                    }
+                }
+                .animate-float {
+                    animation: float 3s ease-in-out infinite;
+                }
+                .animate-float-delay-1 {
+                    animation: float 3s ease-in-out infinite;
+                    animation-delay: 0.5s;
+                }
+                .animate-float-delay-2 {
+                    animation: float 3s ease-in-out infinite;
+                    animation-delay: 1s;
+                }
+            `}</style>
             <div className="mx-auto flex max-w-6xl flex-col-reverse items-center gap-10 px-6 pt-16 pb-20 md:flex-row md:gap-16 md:px-10 lg:max-w-7xl lg:gap-24">
                 {/* Left content */}
                 <div className="max-w-xl space-y-4 text-center md:space-y-5 md:text-left">
@@ -50,21 +71,21 @@ export default function Hero() {
                         <img
                             src="/assets/images/hero/figma.png"
                             alt="Figma icon"
-                            className="h-10 w-10 md:h-18 md:w-18 lg:h-25 lg:w-25"
+                            className="animate-float h-10 w-10 md:h-18 md:w-18 lg:h-25 lg:w-25"
                         />
                     </div>
                     <div className="pointer-events-none absolute top-2 right-[18%] hidden md:block md:-top-24 md:right-[5%] lg:-top-32 lg:right-[2%]">
                         <img
                             src="/assets/images/hero/xl.png"
                             alt="XL icon"
-                            className="h-10 w-10 md:h-18 md:w-18 lg:h-25 lg:w-25"
+                            className="animate-float-delay-1 h-10 w-10 md:h-18 md:w-18 lg:h-25 lg:w-25"
                         />
                     </div>
                     <div className="pointer-events-none absolute -bottom-4 right-[26%] hidden md:block md:-top-38 md:left-[-10%] lg:-top-42 lg:left-[-12%]">
                         <img
                             src="/assets/images/hero/diamond.png"
                             alt="Diamond icon"
-                            className="h-10 w-10 md:h-18 md:w-18 lg:h-20 lg:w-20"
+                            className="animate-float-delay-2 h-10 w-10 md:h-18 md:w-18 lg:h-20 lg:w-20"
                         />
                     </div>
 
