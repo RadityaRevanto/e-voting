@@ -1,4 +1,4 @@
-import { useState, FormEvent } from "react";
+import { useEffect } from "react";
 import SuperadminLayout from "../../_components/superadminlayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,105 +9,32 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import InputError from "@/pages/dashboard/_components/input-error";
 import { Head, router } from "@inertiajs/react";
 import { AlertCircle, Eye, EyeOff, UserPlus } from "lucide-react";
-
-interface FormErrors {
-    username?: string;
-    email?: string;
-    phone?: string;
-    password?: string;
-    password_confirmation?: string;
-    message?: string;
-}
+import { useCreateAdmin } from "@/hooks/use-create-admin";
 
 export default function AkunAdminPage() {
-    const [formData, setFormData] = useState({
-        username: "",
-        email: "",
-        phone: "",
-        password: "",
-        password_confirmation: "",
-    });
-    const [errors, setErrors] = useState<FormErrors>({});
-    const [success, setSuccess] = useState("");
-    const [processing, setProcessing] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const {
+        formData,
+        errors,
+        success,
+        processing,
+        showPassword,
+        showConfirmPassword,
+        handleChange,
+        handleSubmit,
+        resetForm,
+        togglePassword,
+        toggleConfirmPassword,
+    } = useCreateAdmin();
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
-        // Clear error ketika user mulai mengetik
-        if (errors[name as keyof FormErrors]) {
-            setErrors((prev) => ({
-                ...prev,
-                [name]: undefined,
-            }));
-        }
-    };
-
-    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setProcessing(true);
-        setErrors({});
-        setSuccess("");
-
-        // Validasi password match
-        if (formData.password !== formData.password_confirmation) {
-            setErrors({
-                password_confirmation: "Password dan konfirmasi password tidak cocok",
-            });
-            setProcessing(false);
-            return;
-        }
-
-        try {
-            const response = await fetch("/api/admin/create", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                    "X-CSRF-TOKEN":
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute("content") || "",
-                },
-                body: JSON.stringify(formData),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                setErrors(data.errors || { message: data.message || "Terjadi kesalahan saat membuat akun admin" });
-                setProcessing(false);
-                return;
-            }
-
-            setSuccess("Akun admin berhasil dibuat!");
-            // Reset form
-            setFormData({
-                username: "",
-                email: "",
-                phone: "",
-                password: "",
-                password_confirmation: "",
-            });
-            
-            // Redirect atau refresh setelah 2 detik
-            setTimeout(() => {
+    // Optional: Reload halaman setelah 2 detik jika berhasil (behavior dari code sebelumnya)
+    useEffect(() => {
+        if (success) {
+            const timer = setTimeout(() => {
                 router.reload();
             }, 2000);
-        } catch (error) {
-            console.error("Error:", error);
-            setErrors({
-                message: "Terjadi kesalahan saat membuat akun admin. Silakan coba lagi.",
-            });
-        } finally {
-            setProcessing(false);
+            return () => clearTimeout(timer);
         }
-    };
+    }, [success]);
 
     return (
         <SuperadminLayout>
@@ -246,7 +173,7 @@ export default function AkunAdminPage() {
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
+                                            onClick={togglePassword}
                                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                                             tabIndex={-1}
                                         >
@@ -285,9 +212,7 @@ export default function AkunAdminPage() {
                                         />
                                         <button
                                             type="button"
-                                            onClick={() =>
-                                                setShowConfirmPassword(!showConfirmPassword)
-                                            }
+                                            onClick={toggleConfirmPassword}
                                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                                             tabIndex={-1}
                                         >
@@ -320,17 +245,7 @@ export default function AkunAdminPage() {
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        onClick={() => {
-                                            setFormData({
-                                                username: "",
-                                                email: "",
-                                                phone: "",
-                                                password: "",
-                                                password_confirmation: "",
-                                            });
-                                            setErrors({});
-                                            setSuccess("");
-                                        }}
+                                        onClick={resetForm}
                                         disabled={processing}
                                         className="flex-1"
                                     >
