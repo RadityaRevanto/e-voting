@@ -1,5 +1,6 @@
 import { apiFetch } from './api-client';
 import * as authStorage from './auth-storage';
+import { validateRole } from './authorization';
 
 // Tipe untuk kredensial login
 export interface LoginCredentials {
@@ -8,21 +9,28 @@ export interface LoginCredentials {
 }
 
 // Tipe untuk data user dari API
+// Role harus tunggal dan jelas, menggunakan UserRole yang strict
 export interface UserData {
   id: number;
   name: string;
   email: string;
-  role: string;
+  role: authStorage.UserRole; // Strict type, bukan string
 }
 
 // Helper untuk normalisasi role dari backend ke UserRole
+// Menggunakan validateRole untuk memastikan exact match
 const normalizeRole = (role: string): authStorage.UserRole | null => {
-  // Normalisasi role dari backend
-  if (role === 'admin' || role === 'super_admin') {
-    return role === 'super_admin' ? 'super_admin' : 'admin';
+  // Validasi role menggunakan helper terpusat
+  const validatedRole = validateRole(role);
+  if (validatedRole) {
+    return validatedRole;
   }
-  if (role === 'paslon') return 'paslon';
-  if (role === 'user' || role === 'voter') return 'user';
+  
+  // Fallback untuk kompatibilitas (jika backend mengirim 'voter' sebagai 'user')
+  if (role === 'voter') {
+    return 'user';
+  }
+  
   return null;
 };
 

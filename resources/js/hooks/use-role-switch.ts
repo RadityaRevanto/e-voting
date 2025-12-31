@@ -10,15 +10,17 @@ export function useRoleSwitch(): void {
     const pathname = url;
 
     // Tentukan role berdasarkan prefix route
+    // ⚠️ PENTING: Exact match - super_admin tidak otomatis memiliki akses admin
     let targetRole: authStorage.UserRole | null = null;
 
-    if (pathname.startsWith('/admin/') || pathname.startsWith('/superadmin/')) {
+    if (pathname.startsWith('/superadmin/')) {
+      // Route superadmin hanya untuk super_admin
       if (authStorage.isAuthenticated('super_admin')) {
         targetRole = 'super_admin';
-      } else if (authStorage.isAuthenticated('admin')) {
-        targetRole = 'admin';
-      } else {
-        // Jika tidak ada token, default ke admin
+      }
+    } else if (pathname.startsWith('/admin/')) {
+      // Route admin hanya untuk admin (bukan super_admin)
+      if (authStorage.isAuthenticated('admin')) {
         targetRole = 'admin';
       }
     } else if (pathname.startsWith('/paslon/')) {

@@ -36,15 +36,12 @@ class RoleMiddleware
             $userRole = 'paslon';
         }
 
-        // Super admin memiliki akses ke semua role admin
-        // Jika route memerlukan 'admin', super_admin juga bisa akses
+        // ⚠️ PENTING: Exact match only - tidak ada akses implisit antar role
+        // super_admin TIDAK otomatis memiliki akses admin
+        // Jika route memerlukan 'admin' DAN 'super_admin', harus didefinisikan eksplisit: role:admin,super_admin
         $allowedRoles = $roles;
-        if (in_array('admin', $roles) && $userRole === 'super_admin') {
-            // Super admin bisa akses route yang memerlukan 'admin'
-            return $next($request);
-        }
-
-        // Cek apakah user memiliki role yang diizinkan
+        
+        // Cek apakah user memiliki role yang diizinkan (exact match)
         if (!in_array($userRole, $allowedRoles)) {
             return response()->json([
                 'success' => false,

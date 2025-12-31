@@ -123,9 +123,12 @@ export default function LogActivityPage() {
     };
 
     const getRoleBadgeColor = (role: string) => {
+        // Exact match - tidak ada fallback otomatis
         switch (role) {
             case "admin":
                 return "bg-red-500 text-white";
+            case "super_admin":
+                return "bg-purple-500 text-white";
             case "paslon":
                 return "bg-blue-500 text-white";
             case "user":
@@ -298,6 +301,7 @@ export default function LogActivityPage() {
                                                     <td className="p-3">
                                                         <Badge className={getRoleBadgeColor(log.user_role || "user")}>
                                                             {log.user_role === "admin" ? "Admin" : 
+                                                             log.user_role === "super_admin" ? "Super Admin" :
                                                              log.user_role === "paslon" ? "Paslon" : 
                                                              "User"}
                                                         </Badge>
