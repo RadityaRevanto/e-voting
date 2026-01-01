@@ -175,6 +175,32 @@ class PaslonController extends Controller
         }
     }
 
+    public function getCurrentPaslon(Request $request) {
+        try {
+            // Ambil user yang sedang login
+            $user = $request->user();
+
+            if (!$user || $user->role !== 'paslon') {
+                return HttpStatus::code403('Akses ditolak. Hanya paslon yang bisa mengakses data ini.');
+            }
+
+            // Cari data paslon berdasarkan user_id
+            $paslon = Paslon::where('user_id', $user->id)->first();
+
+            if (is_null($paslon)) {
+                return HttpStatus::code404('Data paslon tidak ditemukan');
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Menampilkan data paslon yang sedang login",
+                'data' => $paslon,
+            ], 200);
+        } catch (\Throwable $th) {
+            return HttpStatus::code500($th);
+        }
+    }
+
     public function test() {
         return redirect('api/hello-world');
     }

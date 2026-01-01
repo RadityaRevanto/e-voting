@@ -1,37 +1,56 @@
 import PaslonLayout from "../../../_components/paslonlayout";
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent, useEffect, useMemo } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import InputError from "@/pages/dashboard/_components/input-error";
 import { Plus, Trash2 } from "lucide-react";
-import { usePage } from "@inertiajs/react";
-
-interface PageProps {
-    vision?: string;
-    missions?: string[];
-    [key: string]: any;
-}
+import { useVisiMisiPaslon } from "@/hooks/use-visi-misi-paslon";
 
 export default function PaslonDashboardChangePage() {
-    const { vision: initialVision = "", missions: initialMissions = [""] } = usePage<PageProps>().props;
-    const [vision, setVision] = useState(initialVision);
-    const [missions, setMissions] = useState<string[]>(
-        initialMissions.length > 0 ? initialMissions : [""]
+    const {
+        visi: visiFromHook,
+        misi: misiFromHook,
+        loading,
+        submitting,
+        error: hookError,
+        fetchVisiMisi,
+        updateVisiMisi,
+    } = useVisiMisiPaslon(false);
+
+    const parseMissions = (misiString: string | null): string[] => {
+        if (!misiString) return [""];
+        const parsed = misiString
+            .split("\n")
+            .map((m) => m.trim())
+            .filter((m) => m.length > 0);
+        return parsed.length > 0 ? parsed : [""];
+    };
+
+    const initialMissions = useMemo(
+        () => parseMissions(misiFromHook),
+        [misiFromHook]
     );
 
-    // Update state ketika props berubah
+    const [vision, setVision] = useState(visiFromHook || "");
+    const [missions, setMissions] = useState<string[]>(initialMissions);
+
     useEffect(() => {
-        setVision(initialVision);
-        setMissions(initialMissions.length > 0 ? initialMissions : [""]);
-    }, [initialVision, initialMissions]);
+        if (visiFromHook !== null) {
+            setVision(visiFromHook);
+        }
+        setMissions(parseMissions(misiFromHook));
+    }, [visiFromHook, misiFromHook]);
+
+    useEffect(() => {
+        fetchVisiMisi();
+    }, [fetchVisiMisi]);
+
     const [errors, setErrors] = useState<{
         vision?: string;
         missions?: string;
         message?: string;
     }>({});
     const [success, setSuccess] = useState("");
-    const [processing, setProcessing] = useState(false);
 
     const handleAddMission = () => {
         setMissions([...missions, ""]);
@@ -54,76 +73,69 @@ export default function PaslonDashboardChangePage() {
         e.preventDefault();
         setErrors({});
         setSuccess("");
-        setProcessing(true);
 
-        // Validasi client-side
         if (!vision.trim()) {
             setErrors({
                 vision: "Vision harus diisi",
             });
-            setProcessing(false);
             return;
         }
 
-        // Filter mission yang tidak kosong
         const validMissions = missions.filter((mission) => mission.trim() !== "");
 
         if (validMissions.length === 0) {
             setErrors({
                 missions: "Minimal harus ada 1 mission",
             });
-            setProcessing(false);
             return;
         }
 
         try {
-            const csrfToken = document
-                .querySelector('meta[name="csrf-token"]')
-                ?.getAttribute("content") || "";
+            const misiString = validMissions.map((m) => m.trim()).join("\n");
 
-            const response = await fetch("/paslon/dashboard/vision-mission", {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": csrfToken,
-                    "Accept": "application/json",
-                },
-                body: JSON.stringify({
-                    vision: vision.trim(),
-                    missions: validMissions.map((m) => m.trim()),
-                }),
+            await updateVisiMisi({
+                visi: vision.trim() || null,
+                misi: misiString || null,
             });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                if (data.errors) {
-                    setErrors(data.errors);
-                } else if (data.message) {
-                    setErrors({ message: data.message });
-                } else {
-                    setErrors({ message: "Terjadi kesalahan saat menyimpan vision dan mission" });
-                }
-                setProcessing(false);
-                return;
-            }
 
             setSuccess("Vision dan Mission berhasil disimpan!");
             setErrors({});
 
-            // Reset success message setelah 5 detik
             setTimeout(() => {
                 setSuccess("");
             }, 5000);
         } catch (error) {
-            console.error("Error saving vision and mission:", error);
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "Terjadi kesalahan saat menyimpan vision dan mission. Silakan coba lagi.";
             setErrors({
-                message: "Terjadi kesalahan saat menyimpan vision dan mission. Silakan coba lagi.",
+                message: errorMessage,
             });
-        } finally {
-            setProcessing(false);
         }
     };
+
+    if (loading) {
+        return (
+            <PaslonLayout>
+                <div className="bg-white w-full min-h-screen p-6">
+                    <div className="w-full">
+                        <header className="flex flex-col gap-4 mb-8">
+                            <h1 className="font-bold text-[#53589a] text-3xl sm:text-4xl lg:text-5xl leading-tight">
+                                CHANGE
+                            </h1>
+                            <div className="h-[2px] w-32 sm:w-64 bg-[#53589a]" />
+                        </header>
+                        <div className="flex items-center justify-center py-12">
+                            <p className="text-[#53599b] text-base md:text-lg">
+                                Memuat data...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </PaslonLayout>
+        );
+    }
 
     return (
         <PaslonLayout>
@@ -143,9 +155,11 @@ export default function PaslonDashboardChangePage() {
                             </div>
                         )}
 
-                        {errors.message && (
+                        {(errors.message || hookError) && (
                             <div className="p-4 bg-red-50 border border-red-200 rounded-md">
-                                <p className="text-sm text-red-800">{errors.message}</p>
+                                <p className="text-sm text-red-800">
+                                    {errors.message || hookError}
+                                </p>
                             </div>
                         )}
 
@@ -162,7 +176,7 @@ export default function PaslonDashboardChangePage() {
                                 value={vision}
                                 onChange={(e) => setVision(e.target.value)}
                                 className="w-full min-h-[120px]"
-                                disabled={processing}
+                                disabled={submitting || loading}
                                 placeholder="Masukkan vision Anda"
                                 aria-invalid={errors.vision ? "true" : "false"}
                             />
@@ -180,7 +194,7 @@ export default function PaslonDashboardChangePage() {
                                     onClick={handleAddMission}
                                     variant="outline"
                                     className="text-[#53589a] hover:bg-[#53589a] hover:text-white border-[#53589a]"
-                                    disabled={processing}
+                                    disabled={submitting || loading}
                                 >
                                     <Plus className="w-4 h-4 mr-2" />
                                     Tambah Mission
@@ -199,7 +213,7 @@ export default function PaslonDashboardChangePage() {
                                             value={mission}
                                             onChange={(e) => handleMissionChange(index, e.target.value)}
                                             className="w-full min-h-[80px]"
-                                            disabled={processing}
+                                            disabled={submitting || loading}
                                             placeholder={`Masukkan mission ${index + 1}`}
                                         />
                                     </div>
@@ -209,7 +223,7 @@ export default function PaslonDashboardChangePage() {
                                             onClick={() => handleRemoveMission(index)}
                                             variant="outline"
                                             className="mt-7 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                                            disabled={processing}
+                                            disabled={submitting || loading}
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </Button>
@@ -225,10 +239,12 @@ export default function PaslonDashboardChangePage() {
                         <div className="flex gap-4 pt-4">
                             <Button
                                 type="submit"
-                                disabled={processing}
+                                disabled={submitting || loading}
                                 className="px-6 py-2 bg-[#53589a] hover:bg-[#43477a] text-white rounded-full font-semibold"
                             >
-                                {processing ? "Menyimpan..." : "Simpan Perubahan"}
+                                {submitting || loading
+                                    ? "Menyimpan..."
+                                    : "Simpan Perubahan"}
                             </Button>
                         </div>
                     </form>
