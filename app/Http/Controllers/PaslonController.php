@@ -2,153 +2,206 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Paslon;
+use App\Models\User;
+use App\Helpers\HttpStatus;
+use App\Http\Resources\Paslon\PaslonPreviewResource;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 
 class PaslonController extends Controller
 {
-    /**
-     * Get vision and mission for current paslon
-     */
-    public function getVisionMission(Request $request)
-    {
+    // app/Http/Controllers/PaslonController.php
+    public function register(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'username' => 'required|string|max:64',
+            'email' => 'required|email|unique:App\Models\User,email',
+            'password' => 'required',
+            'confirm_password' => 'required|same:password',
+            'nama_ketua' => 'required|string|max:100',
+            'umur_ketua' => 'nullable|integer|min:1|max:100',
+            'jurusan_ketua' => 'nullable|string|max:50',
+            'nama_wakil_ketua' => 'required|string|max:100',
+            'umur_wakil_ketua' => 'nullable|integer|min:1|max:100',
+            'jurusan_wakil_ketua' => 'nullable|string|max:50',
+            'foto_paslon' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'visi' => 'nullable|string',
+            'misi' => 'nullable|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        if ($request->password != $request->confirm_password) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Confirm password harus sama dengan password',
+                'errors' => [
+                    'confirm_password' => ['Confirm password harus sama dengan password']
+                ],
+            ], 422);
+        }
+
         try {
-            // Ambil data user yang sedang login
-            $user = Auth::user();
+            $user = User::create([
+                'name' => $request->username,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'role' => 'paslon'
+            ]);
 
-            // Debug log untuk memastikan user dan paslon tersedia
-            Log::info('VisionMission - Get request from user ID: ' . ($user->id ?? 'null'));
-
-            // Pastikan user terautentikasi dan memiliki data paslon
-            if (!$user || !$user->paslon) {
-                Log::warning('VisionMission - User is not a paslon', [
-                    'user_id' => $user->id ?? 'null',
-                    'has_paslon' => isset($user->paslon)
-                ]);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User is not a paslon',
-                ], 403);
+            // Handle upload foto paslon
+            $fotoPath = null;
+            if ($request->hasFile('foto_paslon')) {
+                $foto = $request->file('foto_paslon');
+                $fotoName = time() . '_' . $foto->getClientOriginalName();
+                $fotoPath = $foto->storeAs('paslon', $fotoName, 'public');
             }
 
-            // Ambil data paslon yang terkait dengan user
-            $paslon = $user->paslon;
-
-            // Log data paslon yang ditemukan
-            Log::info('VisionMission - Paslon data found', [
-                'paslon_id' => $paslon->id,
-                'visi' => $paslon->visi ?? 'empty',
-                'misi' => $paslon->misi ?? []
+            $paslon = Paslon::create([
+                'user_id' => $user->id,
+                'nama_ketua' => $request->nama_ketua,
+                'umur_ketua' => $request->umur_ketua,
+                'jurusan_ketua' => $request->jurusan_ketua,
+                'nama_wakil_ketua' => $request->nama_wakil_ketua,
+                'umur_wakil_ketua' => $request->umur_wakil_ketua,
+                'jurusan_wakil_ketua' => $request->jurusan_wakil_ketua,
+                'foto_paslon' => $fotoPath,
+                'visi' => $request->visi,
+                'misi' => $request->misi,
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Data vision dan mission berhasil diambil',
+                'message' => "Berhasil buat akun untuk PASLON",
                 'data' => [
-                    'ketua' => $paslon->nama_ketua ?? '',
-                    'wakilKetua' => $paslon->nama_wakil_ketua ?? '',
-                    'title' => 'VILLAGE HEAD ELECTION', // Bisa disesuaikan jika ada di database
-                    'vision' => $paslon->visi ?? '',
-                    'missions' => $paslon->misi ?? [],
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('VisionMission - Error fetching: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan server',
-                'error' => $e->getMessage(),
-            ], 500);
+                    'user' => $user,
+                    'paslon' => $paslon,
+                ],
+            ], 200);
+        } catch (\Throwable $th) {
+            return HttpStatus::code500($th);
         }
     }
 
-    /**
-     * Update vision and mission for current paslon
-     */
-    public function updateVisionMission(Request $request)
-    {
+    public function index() {
+        $paslon = Paslon::all();
+        return response()->json([
+            'success' => true,
+            'message' => "Menampilkan data preview PASLON",
+            'data' => PaslonPreviewResource::collection($paslon),
+        ], 200);
+    }
+
+    public function show(int $id) {
+        $paslon = Paslon::find($id);
+
+        if (is_null($paslon)) return HttpStatus::code404();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Menampilkan data PASLON $id",
+            'data' => $paslon,
+        ], 200);
+    }
+
+    public function deleteById(int $id) {
         try {
-            // Ambil data user yang sedang login
-            $user = Auth::user();
+            $paslon = Paslon::find($id);
 
-            // Debug log untuk memastikan user dan request yang dikirim
-            Log::info('VisionMission - Update request', [
-                'user_id' => $user->id ?? 'null',
-                'request_data' => $request->all()
-            ]);
+            if (is_null($paslon)) return HttpStatus::code404();
 
-            // Pastikan user terautentikasi dan memiliki data paslon
-            if (!$user || !$user->paslon) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User is not a paslon',
-                ], 403);
+            $user = User::find($paslon->user_id);
+            $user->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "PASLON berhasil di hapus",
+                'data' => $user,
+            ], 200);
+        } catch (\Throwable $th) {
+            return HttpStatus::code500($th);
+        }
+    }
+    // app/Http/Controllers/PaslonController.php
+    public function updateVisiMisi(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'visi' => 'nullable|string',
+            'misi' => 'nullable|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            // Ambil user yang sedang login
+            $user = $request->user();
+
+            if (!$user || $user->role !== 'paslon') {
+                return HttpStatus::code403('Akses ditolak. Hanya paslon yang bisa mengupdate visi misi.');
             }
 
-            // Ambil data paslon yang terkait dengan user
-            $paslon = $user->paslon;
+            // Cari data paslon berdasarkan user_id
+            $paslon = Paslon::where('user_id', $user->id)->first();
 
-            // Validasi input dari request
-            $validator = Validator::make($request->all(), [
-                'vision' => 'required|string|max:500',
-                'missions' => 'required|array|min:1',
-                'missions.*' => 'required|string|max:200',
-            ], [
-                'vision.required' => 'Vision harus diisi',
-                'missions.required' => 'Minimal harus ada 1 mission',
-                'missions.min' => 'Minimal harus ada 1 mission',
-                'missions.*.required' => 'Setiap mission harus diisi',
-                'missions.*.max' => 'Mission maksimal 200 karakter',
-            ]);
-
-            // Jika validasi gagal
-            if ($validator->fails()) {
-                Log::warning('VisionMission - Validation failed', [
-                    'errors' => $validator->errors()->toArray()
-                ]);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validasi gagal',
-                    'errors' => $validator->errors(),
-                ], 422);
+            if (is_null($paslon)) {
+                return HttpStatus::code404('Data paslon tidak ditemukan');
             }
 
-            // Update data vision dan mission pada paslon
+            // Update hanya visi dan misi
             $paslon->update([
-                'visi' => $request->vision,
-                'misi' => $request->missions,
-            ]);
-
-            // Log update yang berhasil
-            Log::info('VisionMission - Updated successfully', [
-                'paslon_id' => $paslon->id,
-                'new_vision' => $request->vision,
-                'new_missions' => $request->missions
+                'visi' => $request->visi,
+                'misi' => $request->misi,
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Vision dan Mission berhasil diperbarui!',
-                'data' => [
-                    'vision' => $paslon->visi,
-                    'missions' => $paslon->misi,
-                ]
-            ]);
+                'message' => "Visi dan misi berhasil diupdate",
+                'data' => $paslon,
+            ], 200);
+        } catch (\Throwable $th) {
+            return HttpStatus::code500($th);
+        }
+    }
 
-        } catch (\Exception $e) {
-            Log::error('VisionMission - Error updating: ' . $e->getMessage());
+    public function getCurrentPaslon(Request $request) {
+        try {
+            // Ambil user yang sedang login
+            $user = $request->user();
+
+            if (!$user || $user->role !== 'paslon') {
+                return HttpStatus::code403('Akses ditolak. Hanya paslon yang bisa mengakses data ini.');
+            }
+
+            // Cari data paslon berdasarkan user_id
+            $paslon = Paslon::where('user_id', $user->id)->first();
+
+            if (is_null($paslon)) {
+                return HttpStatus::code404('Data paslon tidak ditemukan');
+            }
 
             return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan server',
-                'error' => $e->getMessage(),
-            ], 500);
+                'success' => true,
+                'message' => "Menampilkan data paslon yang sedang login",
+                'data' => $paslon,
+            ], 200);
+        } catch (\Throwable $th) {
+            return HttpStatus::code500($th);
         }
+    }
+
+    public function test() {
+        return redirect('api/hello-world');
     }
 }

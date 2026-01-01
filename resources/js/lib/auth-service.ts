@@ -87,7 +87,12 @@ export const login = async (
   // Set active role
   authStorage.setActiveRole(normalizedRole);
 
-  return user;
+  // Update user.role dengan role yang sudah dinormalisasi
+  // Ini penting agar redirect di halaman login bisa bekerja dengan benar
+  return {
+    ...user,
+    role: normalizedRole,
+  };
 };
 
 /**
@@ -146,6 +151,16 @@ export const getCurrentUser = async (): Promise<UserData> => {
     throw new Error(result.message || 'Gagal mengambil data user');
   }
 
-  return result.data;
+  // Normalisasi role dari backend (backend mungkin mengirim 'voter' sebagai 'user')
+  const normalizedRole = normalizeRole(result.data.role);
+  if (!normalizedRole) {
+    throw new Error('Role tidak valid');
+  }
+
+  // Update user.role dengan role yang sudah dinormalisasi
+  return {
+    ...result.data,
+    role: normalizedRole,
+  };
 };
 

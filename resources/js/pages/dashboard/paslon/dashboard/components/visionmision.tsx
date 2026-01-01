@@ -1,21 +1,19 @@
 import React from "react";
 import { UserRound } from "lucide-react";
 import { Link } from "@inertiajs/react";
-import { useVisionMission } from "@/hooks/use-vision-mission";
+import { useVisiMisiPaslon } from "@/hooks/use-visi-misi-paslon";
 
 export const VisionMissionSection = () => {
-  const { 
-    vision, 
-    missions, 
-    ketua, 
-    wakilKetua, 
-    title, 
-    loading, 
-    error 
-  } = useVisionMission();
+  const {
+    visi,
+    misi,
+    namaKetua,
+    namaWakilKetua,
+    loading,
+    error,
+  } = useVisiMisiPaslon();
 
-  // Fungsi untuk mendapatkan inisial dari nama
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | null) => {
     if (!name) return "??";
     return name
       .split(" ")
@@ -25,23 +23,31 @@ export const VisionMissionSection = () => {
       .slice(0, 2);
   };
 
-  // Loading state
+  const parseMissions = (misiString: string | null): string[] => {
+    if (!misiString) return [];
+    return misiString
+      .split("\n")
+      .map((m) => m.trim())
+      .filter((m) => m.length > 0);
+  };
+
+  const missions = parseMissions(misi);
+
   if (loading) {
     return (
       <section className="bg-white rounded-[20px] md:rounded-[25px] xl:rounded-[30px] border-2 border-[#80808080] shadow-[0px_4px_4px_#00000040] p-4 md:p-5 xl:p-6">
         <div className="flex items-center justify-center py-8">
-          <div className="text-[#53599b]">Loading...</div>
+          <p className="text-[#53599b] text-base md:text-lg">Memuat data...</p>
         </div>
       </section>
     );
   }
 
-  // Error state
   if (error) {
     return (
       <section className="bg-white rounded-[20px] md:rounded-[25px] xl:rounded-[30px] border-2 border-[#80808080] shadow-[0px_4px_4px_#00000040] p-4 md:p-5 xl:p-6">
         <div className="flex items-center justify-center py-8">
-          <div className="text-red-500">Error: {error}</div>
+          <p className="text-red-500 text-base md:text-lg">{error}</p>
         </div>
       </section>
     );
@@ -56,7 +62,7 @@ export const VisionMissionSection = () => {
             
             <div className="absolute top-2 left-2 w-[84px] h-[84px] md:w-[100px] md:h-[100px] rounded-full bg-gradient-to-br from-[#53599b] to-[#3a3f6b] flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-2xl md:text-3xl">
-                {getInitials(ketua)}
+                {getInitials(namaKetua)}
               </span>
             </div>
           </div>
@@ -64,7 +70,7 @@ export const VisionMissionSection = () => {
 
         <div className="flex-1">
           <p className="text-[#5760c0] text-lg md:text-xl xl:text-2xl font-semibold mb-3">
-            {title}
+            VILLAGE HEAD ELECTION
           </p>
 
           <div className="flex flex-col gap-3 mb-3">
@@ -75,7 +81,7 @@ export const VisionMissionSection = () => {
               <div className="flex flex-col">
                 <span className="text-[#53599b] text-sm md:text-base font-semibold">Ketua Paslon:</span>
                 <p className="text-[#9296d1] text-base md:text-lg xl:text-xl font-medium">
-                  {ketua || "Belum diisi"}
+                  {namaKetua || "Belum diisi"}
                 </p>
               </div>
             </div>
@@ -87,7 +93,7 @@ export const VisionMissionSection = () => {
               <div className="flex flex-col">
                 <span className="text-[#53599b] text-sm md:text-base font-semibold">Wakil Ketua Paslon:</span>
                 <p className="text-[#9296d1] text-base md:text-lg xl:text-xl font-medium">
-                  {wakilKetua || "Belum diisi"}
+                  {namaWakilKetua || "Belum diisi"}
                 </p>
               </div>
             </div>
@@ -101,7 +107,7 @@ export const VisionMissionSection = () => {
             Vision
           </h3>
           <p className="text-[#53599b] text-sm md:text-base font-semibold">
-            {vision || "Belum diisi"}
+            {visi || "Belum diisi"}
           </p>
         </div>
 
@@ -109,18 +115,20 @@ export const VisionMissionSection = () => {
           <h3 className="text-[#53599b] text-base md:text-2xl font-bold mb-2">
             Mission
           </h3>
-          <div className="text-[#53599b] text-sm md:text-base font-semibold space-y-2">
-            {missions && missions.length > 0 && missions[0] !== '' ? (
-              missions.map((mission, index) => (
+          {missions.length > 0 ? (
+            <div className="text-[#53599b] text-sm md:text-base font-semibold space-y-2">
+              {missions.map((mission, index) => (
                 <div key={index} className="flex items-start gap-2">
                   <span className="font-bold flex-shrink-0">{index + 1}.</span>
                   <p className="leading-relaxed">{mission}</p>
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-400">Belum diisi</p>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[#53599b] text-sm md:text-base font-semibold">
+              Belum diisi
+            </p>
+          )}
         </div>
       </div>
 
