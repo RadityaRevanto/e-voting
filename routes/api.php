@@ -98,13 +98,24 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Paslon only
-    Route::middleware('role:paslon')->prefix('paslon')->group(function () {
-        Route::get('/', [PaslonController::class, 'test']);
-        Route::post('/update-visi-misi', [PaslonController::class, 'updateVisiMisi']);
+Route::middleware('role:paslon')->prefix('paslon')->group(function () {
+    Route::get('/', [PaslonController::class, 'test']);
+    
+    // Route lama (untuk kompatibilitas)
+    Route::post('/update-visi-misi', [PaslonController::class, 'updateVisiMisi']);
+    
+    // ✅ ROUTE BARU untuk dashboard vision mission
+    Route::prefix('dashboard')->group(function () {
+        // GET data vision mission
+        Route::get('/vision-mission', [PaslonController::class, 'getVisionMission']);
         
-        // Voting Process (bisa diakses paslon juga)
-        Route::get('/vote/voting-process', [VoteController::class, 'votingProcess']);
+        // PUT update vision mission
+        Route::put('/vision-mission', [PaslonController::class, 'updateVisionMission']);
     });
+    
+    // Voting Process (bisa diakses paslon juga)
+    Route::get('/vote/voting-process', [VoteController::class, 'votingProcess']);
+}); // ← INI SATU-SATUNYA penutup untuk group paslon
 
     // Voter only
     Route::middleware('role:voter')->prefix('voter')->group(function () {
