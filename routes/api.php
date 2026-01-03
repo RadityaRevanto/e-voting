@@ -58,7 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/activity-logs', [ActivityLogController::class, 'index']);
 
         Route::prefix('schedules')->group(function () {
-            Route::post('/create', [ScheduleController::class, 'store']);
+            Route::post('/set', [ScheduleController::class, 'setSchedule']);
         });
     });
 
