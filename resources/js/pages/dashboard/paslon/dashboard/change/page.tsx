@@ -18,7 +18,7 @@ export default function PaslonDashboardChangePage() {
     } = useVisiMisiPaslon(false);
 
     const parseMissions = (misiString: string | null): string[] => {
-        if (!misiString) return [""];
+        if (!misiString || typeof misiString !== 'string') return [""];
         const parsed = misiString
             .split("\n")
             .map((m) => m.trim())
@@ -31,16 +31,20 @@ export default function PaslonDashboardChangePage() {
         [misiFromHook]
     );
 
-    const [vision, setVision] = useState(visiFromHook || "");
-    const [missions, setMissions] = useState<string[]>(initialMissions);
+    const [vision, setVision] = useState("");
+    const [missions, setMissions] = useState<string[]>([""]);
 
+    // Update state when hook data changes
     useEffect(() => {
         if (visiFromHook !== null) {
             setVision(visiFromHook);
+        } else {
+            setVision("");
         }
         setMissions(parseMissions(misiFromHook));
     }, [visiFromHook, misiFromHook]);
 
+    // Fetch data on mount
     useEffect(() => {
         fetchVisiMisi();
     }, [fetchVisiMisi]);
@@ -74,6 +78,7 @@ export default function PaslonDashboardChangePage() {
         setErrors({});
         setSuccess("");
 
+        // Validasi vision
         if (!vision.trim()) {
             setErrors({
                 vision: "Vision harus diisi",
@@ -81,6 +86,7 @@ export default function PaslonDashboardChangePage() {
             return;
         }
 
+        // Validasi missions
         const validMissions = missions.filter((mission) => mission.trim() !== "");
 
         if (validMissions.length === 0) {
@@ -98,13 +104,16 @@ export default function PaslonDashboardChangePage() {
                 misi: misiString || null,
             });
 
+            // Success - data akan diupdate otomatis oleh hook
             setSuccess("Vision dan Mission berhasil disimpan!");
             setErrors({});
 
+            // Clear success message after 5 seconds
             setTimeout(() => {
                 setSuccess("");
             }, 5000);
         } catch (error) {
+            // Error handling - hook sudah set error, tapi kita juga set di local state
             const errorMessage =
                 error instanceof Error
                     ? error.message
@@ -158,7 +167,7 @@ export default function PaslonDashboardChangePage() {
                         {(errors.message || hookError) && (
                             <div className="p-4 bg-red-50 border border-red-200 rounded-md">
                                 <p className="text-sm text-red-800">
-                                    {errors.message || hookError}
+                                    {errors.message || hookError || "Terjadi kesalahan"}
                                 </p>
                             </div>
                         )}

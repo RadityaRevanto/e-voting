@@ -27,7 +27,7 @@ export interface UsePaslonDetailResult {
 
 /**
  * Parse misi dari string ke array
- * Misi bisa berupa JSON string atau string biasa
+ * Misi bisa berupa JSON string atau string biasa yang dipisah dengan newline
  */
 const parseMisi = (misi: string | null | undefined): string[] => {
   if (!misi) return [];
@@ -38,11 +38,17 @@ const parseMisi = (misi: string | null | undefined): string[] => {
     if (Array.isArray(parsed)) {
       return parsed;
     }
-    // Jika bukan array, kembalikan sebagai array dengan satu elemen
-    return [misi];
+    // Jika bukan array, coba split berdasarkan newline
+    return misi
+      .split("\n")
+      .map((m) => m.trim())
+      .filter((m) => m.length > 0);
   } catch {
-    // Jika bukan JSON, kembalikan sebagai array dengan satu elemen
-    return [misi];
+    // Jika bukan JSON, split berdasarkan newline
+    return misi
+      .split("\n")
+      .map((m) => m.trim())
+      .filter((m) => m.length > 0);
   }
 };
 
