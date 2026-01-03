@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\FotoAdmin;
 use App\Models\Paslon;
 use App\Models\Schedule;
 use App\Models\User;
@@ -65,6 +66,8 @@ class DatabaseSeeder extends Seeder
                 'role' => 'voter',
             ]
         );
+
+        for ($i=1; $i <= 3; $i++) FotoAdmin::updateOrCreate(['user_id' => $i, 'foto_path' => null]);
 
         // Create paslon
         Paslon::create([

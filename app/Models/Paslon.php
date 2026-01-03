@@ -31,4 +31,8 @@ class Paslon extends Model
     public function votes() : HasMany {
         return $this->hasMany(Vote::class);
     }
+
+    public function user() {
+        return $this->belongsTo(User::class);
+    }
 }

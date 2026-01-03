@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PaslonController;
 use App\Http\Controllers\VoteController;
@@ -85,27 +86,38 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/{id}/delete', [VoteGuidelineController::class, 'deleteById']);
             Route::post('/swap', [VoteGuidelineController::class, 'swap']); // masih ngebug
         });
-
+        
         // QR Codes
         Route::post('/qr-codes/generate', [QRCodeController::class, 'generate']);
-
+        
         // Live Result
         Route::get('/vote/life-result', [VoteController::class, 'lifeResult']);
         Route::get('/vote/voting-process', [VoteController::class, 'votingProcess']);
-
+        
         // Monitoring login logs (untuk keamanan)
         Route::get('/login-logs', [AuthController::class, 'getLoginLogs']);
+        
+        Route::prefix('profile')->group(function () {
+            Route::get('/', [AdminController::class, 'profile']);
+            Route::get('/photo', [AdminController::class, 'onlyPhoto']);
+            Route::post('/edit', [AdminController::class, 'edit']);
+        });
     });
-
+    
     // Paslon only
     Route::middleware('role:paslon')->prefix('paslon')->group(function () {
-        Route::get('/', [PaslonController::class, 'getCurrentPaslon']);
         Route::post('/update-visi-misi', [PaslonController::class, 'updateVisiMisi']);
         
         // Voting Process (bisa diakses paslon juga)
         Route::get('/vote/voting-process', [VoteController::class, 'votingProcess']);
+        
+        Route::prefix('profile')->group(function () {
+            Route::get('/', [PaslonController::class, 'getCurrentPaslon']);
+            Route::get('/foto', [PaslonController::class, 'onlyPhoto']);
+            Route::post('/edit', [PaslonController::class, 'updateProfile']);
+        });
     });
-
+    
     // Voter only
     Route::middleware('role:voter')->prefix('voter')->group(function () {
         // Paslon
