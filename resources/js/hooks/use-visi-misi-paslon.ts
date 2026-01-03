@@ -93,7 +93,7 @@ export function useVisiMisiPaslon(
       setLoading(true);
       setError(null);
 
-      const response = await apiClient.get('/api/paslon/');
+      const response = await apiClient.get('/api/paslon/profile');
 
       if (!response.ok) {
         if (response.status === 404 || response.status === 405) {

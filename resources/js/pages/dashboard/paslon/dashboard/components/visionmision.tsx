@@ -24,7 +24,7 @@ export const VisionMissionSection = () => {
   };
 
   const parseMissions = (misiString: string | null): string[] => {
-    if (!misiString) return [];
+    if (!misiString || typeof misiString !== 'string') return [];
     return misiString
       .split("\n")
       .map((m) => m.trim())

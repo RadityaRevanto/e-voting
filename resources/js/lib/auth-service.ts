@@ -135,6 +135,16 @@ export const logout = async (role?: authStorage.UserRole): Promise<void> => {
   }
 };
 
+// Tipe untuk response API yang bisa punya username atau name
+interface ApiUserData {
+  id: number;
+  name?: string;
+  username?: string; // AdminProfileResource dan PaslonProfileResource mengembalikan username
+  email: string;
+  role?: string; // PaslonProfileResource tidak mengembalikan role
+  [key: string]: unknown; // Untuk field tambahan seperti foto_admin, nama_ketua, dll
+}
+
 /**
  * Mengambil data user yang sedang login
  * @returns Data user yang sedang terautentikasi
@@ -145,21 +155,38 @@ export const getCurrentUser = async (): Promise<UserData> => {
     method: 'GET',
   });
 
-  const result: ApiResponse<UserData> = await response.json();
+  const result: ApiResponse<ApiUserData> = await response.json();
 
   if (!response.ok || !result.success) {
     throw new Error(result.message || 'Gagal mengambil data user');
   }
 
-  // Normalisasi role dari backend (backend mungkin mengirim 'voter' sebagai 'user')
-  const normalizedRole = normalizeRole(result.data.role);
+  const apiData = result.data;
+
+  // Normalisasi name: gunakan username jika name tidak ada (untuk admin/paslon)
+  const normalizedName = apiData.name || apiData.username || '';
+  if (!normalizedName) {
+    throw new Error('Data user tidak valid: name atau username tidak ditemukan');
+  }
+
+  // Normalisasi role: jika role tidak ada di response (seperti PaslonProfileResource),
+  // gunakan active role dari storage sebagai fallback
+  let roleToNormalize = apiData.role;
+  if (!roleToNormalize) {
+    // Fallback ke active role jika role tidak ada di response
+    roleToNormalize = authStorage.getActiveRole() || '';
+  }
+
+  const normalizedRole = normalizeRole(roleToNormalize);
   if (!normalizedRole) {
     throw new Error('Role tidak valid');
   }
 
-  // Update user.role dengan role yang sudah dinormalisasi
+  // Return data yang sudah dinormalisasi dengan format UserData
   return {
-    ...result.data,
+    id: apiData.id,
+    name: normalizedName,
+    email: apiData.email,
     role: normalizedRole,
   };
 };

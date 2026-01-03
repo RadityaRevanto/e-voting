@@ -45,7 +45,7 @@ export function useVisionMission(
 
       console.log('Fetching vision mission data...');
       
-      const response = await apiFetch("/api/paslon/dashboard/vision-mission", {
+      const response = await apiFetch("/api/paslon/profile", {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -53,17 +53,11 @@ export function useVisionMission(
       });
       
       console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-      // Cek content type
-      const contentType = response.headers.get('content-type');
-      console.log('Content-Type:', contentType);
       
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         
         try {
-          // Coba parse error response
           const text = await response.text();
           console.log('Error response text:', text);
           
@@ -82,36 +76,36 @@ export function useVisionMission(
         throw new Error(errorMessage);
       }
 
-      // Pastikan response adalah JSON
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        console.log('Non-JSON response:', text);
-        throw new Error('Response is not JSON');
-      }
-
       const data = await response.json();
       console.log('Response data:', data);
 
-      // Handle different response formats
       if (data.success === false) {
         throw new Error(data.message || "Gagal mengambil data");
       }
 
       // Extract data from response
-      const visionData = data.data || data;
+      const paslonData = data.data;
       
-      // Set default values jika data kosong
-      setVisionState(visionData.vision || '');
-      setKetua(visionData.ketua || '');
-      setWakilKetua(visionData.wakilKetua || '');
-      setTitle(visionData.title || 'VILLAGE HEAD ELECTION');
+      if (!paslonData) {
+        throw new Error('Data paslon tidak ditemukan');
+      }
       
-      if (visionData.missions && Array.isArray(visionData.missions)) {
-        setMissionsState(
-          visionData.missions.length > 0 
-            ? visionData.missions 
-            : ['']
-        );
+      // Set vision (visi)
+      setVisionState(paslonData.visi || '');
+      
+      // Set ketua dan wakil ketua
+      setKetua(paslonData.nama_ketua || '');
+      setWakilKetua(paslonData.nama_wakil_ketua || '');
+      setTitle('VILLAGE HEAD ELECTION');
+      
+      // Convert misi string to array (split by newline)
+      if (paslonData.misi && typeof paslonData.misi === 'string') {
+        const missionsArray = paslonData.misi
+          .split('\n')
+          .map((m: string) => m.trim())
+          .filter((m: string) => m.length > 0);
+        
+        setMissionsState(missionsArray.length > 0 ? missionsArray : ['']);
       } else {
         setMissionsState(['']);
       }
@@ -158,23 +152,25 @@ export function useVisionMission(
         return false;
       }
 
-      console.log('Saving vision mission:', { vision, missions: validMissions });
+      // Convert missions array to string (join by newline)
+      const misiString = validMissions.map((m) => m.trim()).join('\n');
+
+      console.log('Saving vision mission:', { visi: vision.trim(), misi: misiString });
       
-      const response = await apiFetch("/api/paslon/dashboard/vision-mission", {
-        method: 'PUT',
+      const response = await apiFetch("/api/paslon/update-visi-misi", {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
         body: JSON.stringify({
-          vision: vision.trim(),
-          missions: validMissions.map((m) => m.trim()),
+          visi: vision.trim(),
+          misi: misiString,
         }),
       });
 
       console.log('Save response status:', response.status);
       
-      const contentType = response.headers.get('content-type');
       const responseText = await response.text();
       console.log('Save response text:', responseText);
       
@@ -206,9 +202,32 @@ export function useVisionMission(
         return false;
       }
 
-      // Update local state
-      setVisionState(vision);
-      setMissionsState(validMissions);
+      // Update local state from response data
+      if (data.data) {
+        setVisionState(data.data.visi || vision);
+        if (data.data.nama_ketua) {
+          setKetua(data.data.nama_ketua);
+        }
+        if (data.data.nama_wakil_ketua) {
+          setWakilKetua(data.data.nama_wakil_ketua);
+        }
+        
+        // Convert misi string back to array
+        if (data.data.misi && typeof data.data.misi === 'string') {
+          const missionsArray = data.data.misi
+            .split('\n')
+            .map((m: string) => m.trim())
+            .filter((m: string) => m.length > 0);
+          setMissionsState(missionsArray.length > 0 ? missionsArray : validMissions);
+        } else {
+          setMissionsState(validMissions);
+        }
+      } else {
+        // Fallback: use submitted values
+        setVisionState(vision);
+        setMissionsState(validMissions);
+      }
+      
       setSuccess(data.message || "Vision dan mission berhasil diperbarui!");
       
       // Clear success message after 5 seconds
