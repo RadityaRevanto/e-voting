@@ -66,6 +66,11 @@ Route::prefix('paslon')->group(function () {
     Route::get('settings/edit-profil', function () {
         return Inertia::render('dashboard/paslon/settings/edit-profil/page');
     })->name('paslon.settings.edit-profil');
+
+    // Profile View (Read-only)
+    Route::get('profile', function () {
+        return Inertia::render('dashboard/paslon/profile/page');
+    })->name('paslon.profile');
 });
 
 /*

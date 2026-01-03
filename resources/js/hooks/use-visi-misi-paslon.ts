@@ -26,6 +26,7 @@ interface PaslonData {
   nama_wakil_ketua: string;
   visi: string | null;
   misi: string | null;
+  foto_paslon: string | null;
   [key: string]: unknown;
 }
 
@@ -40,6 +41,7 @@ interface UseVisiMisiPaslonResult {
   misi: string | null;
   namaKetua: string | null;
   namaWakilKetua: string | null;
+  fotoProfil: string | null;
   loading: boolean;
   submitting: boolean;
   error: string | null;
@@ -68,6 +70,7 @@ export function useVisiMisiPaslon(
   const [misi, setMisi] = useState<string | null>(null);
   const [namaKetua, setNamaKetua] = useState<string | null>(null);
   const [namaWakilKetua, setNamaWakilKetua] = useState<string | null>(null);
+  const [fotoProfil, setFotoProfil] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,6 +105,7 @@ export function useVisiMisiPaslon(
           setMisi(null);
           setNamaKetua(null);
           setNamaWakilKetua(null);
+          setFotoProfil(null);
           if (isMountedRef.current) {
             setLoading(false);
           }
@@ -139,6 +143,7 @@ export function useVisiMisiPaslon(
       setMisi(paslon.misi ?? null);
       setNamaKetua(paslon.nama_ketua ?? null);
       setNamaWakilKetua(paslon.nama_wakil_ketua ?? null);
+      setFotoProfil(paslon.foto_paslon ?? null);
     } catch (err: unknown) {
       if (!isMountedRef.current) {
         return;
@@ -154,6 +159,7 @@ export function useVisiMisiPaslon(
       setMisi(null);
       setNamaKetua(null);
       setNamaWakilKetua(null);
+      setFotoProfil(null);
     } finally {
       if (isMountedRef.current) {
         setLoading(false);
@@ -222,6 +228,7 @@ export function useVisiMisiPaslon(
         setMisi(paslon.misi ?? null);
         setNamaKetua(paslon.nama_ketua ?? null);
         setNamaWakilKetua(paslon.nama_wakil_ketua ?? null);
+        setFotoProfil(paslon.foto_paslon ?? null);
       } catch (err: unknown) {
         if (!isMountedRef.current) {
           return;
@@ -254,6 +261,7 @@ export function useVisiMisiPaslon(
     misi,
     namaKetua,
     namaWakilKetua,
+    fotoProfil,
     loading,
     submitting,
     error,
