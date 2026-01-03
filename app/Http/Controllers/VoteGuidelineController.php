@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ActivityLogHelper;
 use App\Helpers\HttpStatus;
 use App\Models\VoteGuideline;
 use Illuminate\Http\Request;
@@ -15,7 +16,12 @@ class VoteGuidelineController extends Controller
         if ($validator->fails()) return HttpStatus::code400();
 
         $guideline = VoteGuideline::create(['text' => $request->text]);
-    
+
+        ActivityLogHelper::createGuidelineLog(
+            'Guideline dibuat id: ' .$guideline->id. ', text : ' .$guideline->text,
+            $guideline->created_at
+        );
+
         return response()->json([
             'success' => true,
             'message' => "Guideline created",
@@ -99,10 +105,14 @@ class VoteGuidelineController extends Controller
         try {
             $guideline = VoteGuideline::findOrFail($id);
             $guideline->delete();
+
+            ActivityLogHelper::deleteGuidelineLog(
+                'Guideline dihapus id: ' .$guideline->id. ', text : ' .$guideline->text,
+            );
             
             return response()->json([
                 'success' => true,
-                'message' => "Vote id=$id berhasil dihapus",
+                'message' => "Vote Guideline id=$id berhasil dihapus",
                 'data' => [],
             ], 200);
         } catch (\Throwable $th) {

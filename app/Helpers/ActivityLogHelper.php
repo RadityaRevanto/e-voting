@@ -4,6 +4,8 @@ namespace App\Helpers;
 
 use App\Models\ActivityLog;
 
+use function Symfony\Component\Clock\now;
+
 class ActivityLogHelper
 {
     public static function createVoteLog ($info, $createdAt) {
@@ -43,6 +45,26 @@ class ActivityLogHelper
             'context' => 'change password',
             'subject' => $subject,
             'created_at' => $createdAt,
+        ]);
+    }
+    
+    public static function createGuidelineLog ($info, $createdAt) {
+        ActivityLog::create([
+            'session' => session()->getId(),
+            'info' => $info,
+            'context' => 'vote guideline',
+            'subject' => 'admin',
+            'created_at' => $createdAt,
+        ]);
+    }
+    
+    public static function deleteGuidelineLog ($info) {
+        ActivityLog::create([
+            'session' => session()->getId(),
+            'info' => $info,
+            'context' => 'vote guideline',
+            'subject' => 'admin',
+            'created_at' => now(),
         ]);
     }
 }

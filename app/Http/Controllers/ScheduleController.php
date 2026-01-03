@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Helpers\HttpStatus;
 use App\Models\Schedule;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ScheduleController extends Controller
 {
@@ -63,6 +65,32 @@ class ScheduleController extends Controller
                 'message' => 'No active event at the moment',
                 'data' => null,
             ]);
+        }
+    }
+
+    public function setSchedule(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'tag' => 'required|string|in:registration,voting,announcement',
+            'start_time' => 'required|date',
+            'end_time' => 'required|date',
+        ]);
+
+        if ($validator->fails()) return HttpStatus::code422($validator->errors());
+
+        try {
+            $schedule = Schedule::where('tag',  $request->tag)->first();
+
+            $schedule->start_time = $request->start_time;
+            $schedule->end_time = $request->end_time;
+            $schedule->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Schedule berhasil diatur',
+                'data' => $schedule,
+            ], 200);
+        } catch (\Exception $e) {
+            return HttpStatus::code500('Gagal mengatur schedule: ' . $e->getMessage());
         }
     }
 }
