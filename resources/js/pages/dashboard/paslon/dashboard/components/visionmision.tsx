@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { UserRound } from "lucide-react";
 import { Link } from "@inertiajs/react";
 import { useVisiMisiPaslon } from "@/hooks/use-visi-misi-paslon";
@@ -9,9 +9,12 @@ export const VisionMissionSection = () => {
     misi,
     namaKetua,
     namaWakilKetua,
+    fotoProfil,
     loading,
     error,
   } = useVisiMisiPaslon();
+
+  const [fotoError, setFotoError] = useState(false);
 
   const getInitials = (name: string | null) => {
     if (!name) return "??";
@@ -32,6 +35,11 @@ export const VisionMissionSection = () => {
   };
 
   const missions = parseMissions(misi);
+
+  // Reset fotoError ketika fotoProfil berubah
+  useEffect(() => {
+    setFotoError(false);
+  }, [fotoProfil]);
 
   if (loading) {
     return (
@@ -60,11 +68,24 @@ export const VisionMissionSection = () => {
           <div className="relative w-[100px] h-[100px] md:w-[117px] md:h-[110px]">
             <div className="absolute inset-0 bg-[#53599b] rounded-full" />
             
-            <div className="absolute top-2 left-2 w-[84px] h-[84px] md:w-[100px] md:h-[100px] rounded-full bg-gradient-to-br from-[#53599b] to-[#3a3f6b] flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-2xl md:text-3xl">
-                {getInitials(namaKetua)}
-              </span>
-            </div>
+            {fotoProfil && !fotoError ? (
+              <div className="absolute top-2 left-2 w-[84px] h-[84px] md:w-[100px] md:h-[100px] rounded-full overflow-hidden bg-gradient-to-br from-[#53599b] to-[#3a3f6b] shadow-lg">
+                <img
+                  src={`/storage/${fotoProfil}`}
+                  alt={`Foto ${namaKetua || 'Paslon'}`}
+                  className="w-full h-full object-cover"
+                  onError={() => {
+                    setFotoError(true);
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="absolute top-2 left-2 w-[84px] h-[84px] md:w-[100px] md:h-[100px] rounded-full bg-gradient-to-br from-[#53599b] to-[#3a3f6b] flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-2xl md:text-3xl">
+                  {getInitials(namaKetua)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

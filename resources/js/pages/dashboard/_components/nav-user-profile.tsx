@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react"
 import { ChevronRight } from "lucide-react"
 import {
   Avatar,
@@ -10,15 +11,18 @@ import { cn } from "@/lib/utils"
 
 export function NavUserProfile({
   user,
+  profileUrl,
 }: {
   user: {
     name: string
     email: string
     avatar: string
   }
+  profileUrl?: string
 }) {
   const { state } = useSidebar()
   const isCollapsed = state === "collapsed"
+  const [imageError, setImageError] = useState(false)
   
   const initials = user.name
     .split(" ")
@@ -26,6 +30,16 @@ export function NavUserProfile({
     .join("")
     .toUpperCase()
     .slice(0, 2)
+
+  // Reset error saat avatar URL berubah
+  useEffect(() => {
+    setImageError(false)
+  }, [user.avatar])
+
+  // Handler untuk error saat loading gambar
+  const handleImageError = () => {
+    setImageError(true)
+  }
 
   return (
     <div className={cn(
@@ -36,7 +50,13 @@ export function NavUserProfile({
         "transition-all",
         isCollapsed ? "h-10 w-10" : "h-20 w-20 mb-3"
       )}>
-        <AvatarImage src={user.avatar} alt={user.name} />
+        {!imageError && user.avatar && user.avatar !== "/avatars/shadcn.jpg" ? (
+          <AvatarImage 
+            src={user.avatar} 
+            alt={user.name}
+            onError={handleImageError}
+          />
+        ) : null}
         <AvatarFallback className={cn(
           isCollapsed ? "text-xs" : "text-lg"
         )}>{initials}</AvatarFallback>
@@ -44,13 +64,15 @@ export function NavUserProfile({
       {!isCollapsed && (
         <>
           <h3 className="font-bold text-xl mb-1 mt-3" style={{ color: '#53599b' }}>{user.name}</h3>
-          <Link
-            href="#"
-            className="flex items-center gap-2 text-sm transition-colors"
-          >
-            <span className="font-normal text-gray-500">View Profile</span>
-            <ChevronRight className="h-4 w-4 text-gray-500" />
-          </Link>
+          {profileUrl && (
+            <Link
+              href={profileUrl}
+              className="flex items-center gap-2 text-sm transition-colors hover:text-[#53589a]"
+            >
+              <span className="font-normal text-gray-500 hover:text-[#53589a]">View Profile</span>
+              <ChevronRight className="h-4 w-4 text-gray-500" />
+            </Link>
+          )}
         </>
       )}
     </div>

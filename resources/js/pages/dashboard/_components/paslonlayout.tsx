@@ -1,4 +1,4 @@
-  import { ReactNode } from "react";
+  import { ReactNode, useState, useEffect } from "react";
   import * as React from "react"
   import {
     Home,
@@ -9,6 +9,7 @@ import { usePage } from "@inertiajs/react"
   import { LogoutConfirmation } from "@/pages/dashboard/_components/logout-confirmation"
   import { NavUserProfile } from "@/pages/dashboard/_components/nav-user-profile"
   import { useCurrentUser } from "@/hooks/use-current-user"
+  import { apiClient } from "@/lib/api-client"
   import {
     Sidebar,
     SidebarContent,
@@ -35,7 +36,37 @@ import { usePage } from "@inertiajs/react"
   // Buat komponen AppSidebarPaslon langsung di file ini
   function AppSidebarPaslon({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { url: currentUrl } = usePage();
-  const { user, loading } = useCurrentUser();
+  const { user, loading: userLoading } = useCurrentUser();
+  const [fotoPaslon, setFotoPaslon] = useState<string | null>(null);
+  const [fotoError, setFotoError] = useState(false);
+  const [loadingPaslon, setLoadingPaslon] = useState(true);
+
+  // Fetch data paslon untuk mendapatkan foto profil
+  useEffect(() => {
+    const fetchPaslonProfile = async () => {
+      try {
+        setLoadingPaslon(true);
+        setFotoError(false);
+        const response = await apiClient.get("/api/paslon/profile");
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data?.foto_paslon) {
+            setFotoPaslon(data.data.foto_paslon);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching paslon profile:", error);
+        setFotoError(true);
+      } finally {
+        setLoadingPaslon(false);
+      }
+    };
+
+    if (!userLoading && user) {
+      fetchPaslonProfile();
+    }
+  }, [user, userLoading]);
 
   const navMain = [
     {
@@ -53,16 +84,26 @@ import { usePage } from "@inertiajs/react"
     isActive: currentUrl.startsWith(item.url),
   }));
 
+  // Handler untuk mendapatkan URL avatar
+  const getAvatarUrl = (): string => {
+    if (fotoPaslon && !fotoError) {
+      return `/storage/${fotoPaslon}`;
+    }
+    return "/avatars/shadcn.jpg"; // Default avatar fallback
+  };
+
   // Default user data jika masih loading atau error
   const userData = user ? {
     name: user.name,
     email: user.email,
-    avatar: "/avatars/shadcn.jpg", // Default avatar, bisa diganti jika ada di API
+    avatar: getAvatarUrl(),
   } : {
     name: "User",
     email: "",
     avatar: "/avatars/shadcn.jpg",
   };
+
+  const loading = userLoading || loadingPaslon;
 
     return (
       <Sidebar 
@@ -78,7 +119,7 @@ import { usePage } from "@inertiajs/react"
               <div className="h-6 w-32 bg-gray-200 animate-pulse rounded mb-1 mt-3" />
             </div>
           ) : (
-            <NavUserProfile user={userData} />
+            <NavUserProfile user={userData} profileUrl="/paslon/profile" />
           )}
         </SidebarHeader>
         <SidebarContent className="px-2 group-data-[collapsible=icon]:px-1">
