@@ -2,9 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ActivityLogHelper;
 use App\Helpers\HttpStatus;
+use App\Http\Resources\Admin\AdminProfileResource;
+use App\Http\Resources\Paslon\PaslonProfileResource;
+use App\Models\FotoAdmin;
 use App\Models\User;
 use App\Models\LoginLog;
+use App\Models\Paslon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -270,31 +275,30 @@ class AuthController extends Controller
     /**
      * Get current authenticated user
      */
-    public function me(Request $request)
-    {
+    public function me(Request $request) {
         try {
             $user = $request->user();
-
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User tidak terautentikasi',
-                    'data' => [],
-                ], 401);
+            $profile = null;
+            
+            if ($user->role == 'admin') {
+                $foto = FotoAdmin::where('user_id', $user->id)->first();
+                $profile = AdminProfileResource::make($foto);
+            } else if ($user->role == 'paslon') {
+                $paslon = Paslon::where('user_id', $user->id)->first();
+                $profile = PaslonProfileResource::make($paslon);
+            } else {
+                $profile = [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                ];
             }
-
-            // Hanya admin yang bisa login
-            $userData = [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-            ];
 
             return response()->json([
                 'success' => true,
                 'message' => 'Data user berhasil diambil',
-                'data' => $userData,
+                'data' => $profile,
             ], 200);
 
         } catch (\Throwable $th) {
@@ -587,6 +591,12 @@ class AuthController extends Controller
             
             $user->password = Hash::make($request->password);
             $user->save();
+            
+            ActivityLogHelper::createChangePasswordLog(
+                "Paslon dengan email {$user->email} telah mengganti passwordnya.",
+                $user->role,
+                $user->updated_at
+            );
 
             return response()->json([
                 'success' => true,

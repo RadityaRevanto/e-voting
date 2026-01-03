@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ActivityLogHelper;
 use App\Models\Paslon;
 use App\Models\User;
 use App\Helpers\HttpStatus;
 use App\Http\Resources\Paslon\PaslonPreviewResource;
+use App\Http\Resources\Paslon\PaslonProfileResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
+use League\Uri\Http;
 
 class PaslonController extends Controller
 {
@@ -76,6 +79,11 @@ class PaslonController extends Controller
                 'visi' => $request->visi,
                 'misi' => $request->misi,
             ]);
+
+            ActivityLogHelper::createRegisterPaslonLog(
+                "Admin {$request->user()->name} mendaftarkan paslon dengan ID {$paslon->id}.",
+                $paslon->created_at
+            );
 
             return response()->json([
                 'success' => true,
@@ -165,6 +173,12 @@ class PaslonController extends Controller
                 'misi' => $request->misi,
             ]);
 
+            // Buat Log
+            ActivityLogHelper::createVisiMisiLog(
+                "Paslon dengan ID {$paslon->id} memperbarui visi dan misi.",
+                $paslon->updated_at
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => "Visi dan misi berhasil diupdate",
@@ -172,6 +186,61 @@ class PaslonController extends Controller
             ], 200);
         } catch (\Throwable $th) {
             return HttpStatus::code500($th);
+        }
+    }
+
+    public function updateProfile(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'username' => 'nullable|string|max:64',
+            'nama_ketua' => 'nullable|string|max:100',
+            'umur_ketua' => 'nullable|integer|min:1|max:100',
+            'jurusan_ketua' => 'nullable|string|max:50',
+            'nama_wakil_ketua' => 'nullable|string|max:100',
+            'umur_wakil_ketua' => 'nullable|integer|min:1|max:100',
+            'jurusan_wakil_ketua' => 'nullable|string|max:50',
+            'foto_paslon' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        if ($validator->fails()) HttpStatus::code422($validator->errors());
+
+        try {
+            $user = $request->user();
+            $paslon = Paslon::where('user_id', $user->id)->first();
+
+            // Update data paslon
+            $user->name = $request->username;
+            $user->save();
+
+            if(!is_null($request->nama_ketua)) $paslon->nama_ketua = $request->nama_ketua;
+            if(!is_null($request->umur_ketua)) $paslon->umur_ketua = $request->umur_ketua;
+            if(!is_null($request->jurusan_ketua)) $paslon->jurusan_ketua = $request->jurusan_ketua;
+            if(!is_null($request->nama_wakil_ketua)) $paslon->nama_wakil_ketua = $request->nama_wakil_ketua;
+            if(!is_null($request->umur_wakil_ketua)) $paslon->umur_wakil_ketua = $request->umur_wakil_ketua;
+            if(!is_null($request->jurusan_wakil_ketua)) $paslon->jurusan_wakil_ketua = $request->jurusan_wakil_ketua;
+
+            // Handle upload foto paslon
+            if ($request->hasFile('foto_paslon')) {
+                $foto = $request->file('foto_paslon');
+                $fotoName = time() . '_' . $foto->getClientOriginalName();
+                $fotoPath = $foto->storeAs('paslon', $fotoName, 'public');
+                $paslon->foto_paslon = $fotoPath;
+            }
+
+            $paslon->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Update profile PASLON berhasil",
+                'data' => [
+                    'user' => $user,
+                    'paslon' => $paslon,
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengupdate profile: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -194,7 +263,7 @@ class PaslonController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Menampilkan data paslon yang sedang login",
-                'data' => $paslon,
+                'data' => PaslonProfileResource::make($paslon),
             ], 200);
         } catch (\Throwable $th) {
             return HttpStatus::code500($th);
