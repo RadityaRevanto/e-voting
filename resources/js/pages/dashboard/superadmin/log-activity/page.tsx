@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import SuperadminLayout from "../../_components/superadminlayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,100 +7,38 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Head } from "@inertiajs/react";
 import { Search, Calendar, User, Vote, Users } from "lucide-react";
-
-interface VoteLog {
-    id: number;
-    user_id: number;
-    user_name: string;
-    user_email: string;
-    user_role: string;
-    candidate_id: number;
-    candidate_name: string;
-    candidate_department: string | null;
-    ip_address: string | null;
-    user_agent: string | null;
-    qr_code_data: string | null;
-    created_at: string;
-}
-
-interface VoteLogsResponse {
-    success: boolean;
-    data: {
-        data: VoteLog[];
-        current_page: number;
-        last_page: number;
-        per_page: number;
-        total: number;
-    };
-}
+import { useActivityLogs } from "@/hooks/use-activity-logs";
 
 export default function LogActivityPage() {
-    const [voteLogs, setVoteLogs] = useState<VoteLog[]>([]);
-    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [dateFilter, setDateFilter] = useState("");
-    const [roleFilter, setRoleFilter] = useState<string>("all");
-    const [pagination, setPagination] = useState({
-        current_page: 1,
-        last_page: 1,
-        per_page: 50,
-        total: 0,
+    const [roleFilter, setRoleFilter] = useState<"superadmin" | "admin" | "paslon" | "voter" | "all">("all");
+
+    const { logs, loading, error, fetchLogs } = useActivityLogs({
+        role: "all",
+        autoFetch: false,
     });
-
-    const fetchVoteLogs = async (page = 1, date?: string, role?: string) => {
-        setLoading(true);
-        try {
-            const params = new URLSearchParams({
-                page: page.toString(),
-                per_page: "50",
-            });
-            
-            if (date) {
-                params.append("date", date);
-            }
-
-            if (role && role !== "all") {
-                params.append("user_role", role);
-            }
-
-            const response = await fetch(`/api/vote-logs?${params.toString()}`, {
-                headers: {
-                    "Accept": "application/json",
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch vote logs");
-            }
-
-            const data: VoteLogsResponse = await response.json();
-            setVoteLogs(data.data.data);
-            setPagination({
-                current_page: data.data.current_page,
-                last_page: data.data.last_page,
-                per_page: data.data.per_page,
-                total: data.data.total,
-            });
-        } catch (error) {
-            console.error("Error fetching vote logs:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     useEffect(() => {
-        fetchVoteLogs(1, dateFilter || undefined, roleFilter || undefined);
-    }, [dateFilter, roleFilter]);
+        fetchLogs(roleFilter);
+    }, [roleFilter, fetchLogs]);
 
-    const filteredLogs = voteLogs.filter((log) => {
-        const searchLower = searchTerm.toLowerCase();
-        return (
-            log.user_name.toLowerCase().includes(searchLower) ||
-            log.user_email.toLowerCase().includes(searchLower) ||
-            log.candidate_name.toLowerCase().includes(searchLower) ||
-            log.candidate_department?.toLowerCase().includes(searchLower)
-        );
-    });
+    const filteredLogs = useMemo(() => {
+        return logs.filter((log) => {
+            const searchLower = searchTerm.toLowerCase();
+            const logDate = new Date(log.created_at).toISOString().split("T")[0];
+            
+            const matchesSearch =
+                log.session.toLowerCase().includes(searchLower) ||
+                log.info.toLowerCase().includes(searchLower) ||
+                log.context.toLowerCase().includes(searchLower) ||
+                log.subject.toLowerCase().includes(searchLower);
+
+            const matchesDate = !dateFilter || logDate === dateFilter;
+
+            return matchesSearch && matchesDate;
+        });
+    }, [logs, searchTerm, dateFilter]);
 
     const formatDateTime = (dateString: string) => {
         const date = new Date(dateString);
@@ -118,23 +56,35 @@ export default function LogActivityPage() {
         setDateFilter(e.target.value);
     };
 
-    const handlePageChange = (page: number) => {
-        fetchVoteLogs(page, dateFilter || undefined, roleFilter || undefined);
+    const handleRoleChange = (value: string) => {
+        setRoleFilter(value as "admin" | "paslon" | "voter" | "all");
     };
 
     const getRoleBadgeColor = (role: string) => {
-        // Exact match - tidak ada fallback otomatis
         switch (role) {
             case "admin":
                 return "bg-red-500 text-white";
-            case "super_admin":
+            case "superadmin":
                 return "bg-purple-500 text-white";
             case "paslon":
                 return "bg-blue-500 text-white";
-            case "user":
+            case "voter":
                 return "bg-green-500 text-white";
             default:
                 return "bg-gray-500 text-white";
+        }
+    };
+
+    const getRoleLabel = (role: string) => {
+        switch (role) {
+            case "admin":
+                return "Admin";
+            case "paslon":
+                return "Paslon";
+            case "voter":
+                return "Voter";
+            default:
+                return role;
         }
     };
 
@@ -159,7 +109,7 @@ export default function LogActivityPage() {
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                                     <Input
                                         type="text"
-                                        placeholder="Cari berdasarkan nama user, email, atau paslon..."
+                                        placeholder="Cari berdasarkan session, info, context, atau subject..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         className="pl-10"
@@ -176,7 +126,7 @@ export default function LogActivityPage() {
                                 </div>
                                 <div className="relative">
                                     <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-10" />
-                                    <Select value={roleFilter} onValueChange={setRoleFilter}>
+                                    <Select value={roleFilter} onValueChange={handleRoleChange}>
                                         <SelectTrigger className="pl-10">
                                             <SelectValue placeholder="Pilih Kategori" />
                                         </SelectTrigger>
@@ -184,7 +134,7 @@ export default function LogActivityPage() {
                                             <SelectItem value="all">Semua Kategori</SelectItem>
                                             <SelectItem value="admin">Admin</SelectItem>
                                             <SelectItem value="paslon">Paslon</SelectItem>
-                                            <SelectItem value="user">User</SelectItem>
+                                            <SelectItem value="voter">Voter</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -198,9 +148,9 @@ export default function LogActivityPage() {
                             <CardContent className="pt-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm text-gray-600">Total Votes</p>
+                                        <p className="text-sm text-gray-600">Total Activity Logs</p>
                                         <p className="text-2xl font-bold text-[#53589a]">
-                                            {pagination.total}
+                                            {logs.length}
                                         </p>
                                     </div>
                                     <Vote className="h-8 w-8 text-[#53589a]" />
@@ -211,9 +161,9 @@ export default function LogActivityPage() {
                             <CardContent className="pt-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm text-gray-600">Halaman</p>
+                                        <p className="text-sm text-gray-600">Setelah Filter</p>
                                         <p className="text-2xl font-bold text-[#53589a]">
-                                            {pagination.current_page} / {pagination.last_page}
+                                            {filteredLogs.length}
                                         </p>
                                     </div>
                                     <Calendar className="h-8 w-8 text-[#53589a]" />
@@ -224,9 +174,9 @@ export default function LogActivityPage() {
                             <CardContent className="pt-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm text-gray-600">Menampilkan</p>
+                                        <p className="text-sm text-gray-600">Kategori Aktif</p>
                                         <p className="text-2xl font-bold text-[#53589a]">
-                                            {filteredLogs.length} dari {pagination.total}
+                                            {roleFilter === "all" ? "Semua" : getRoleLabel(roleFilter)}
                                         </p>
                                     </div>
                                     <User className="h-8 w-8 text-[#53589a]" />
@@ -235,11 +185,20 @@ export default function LogActivityPage() {
                         </Card>
                     </div>
 
-                    {/* Vote Logs Table */}
+                    {/* Error Message */}
+                    {error && (
+                        <Card className="mb-6 shadow-md border-red-200 bg-red-50">
+                            <CardContent className="pt-6">
+                                <p className="text-red-600">{error}</p>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Activity Logs Table */}
                     <Card className="shadow-md">
                         <CardHeader>
                             <CardTitle className="text-xl md:text-2xl text-[#53589a]">
-                                Daftar Aktivitas Voting
+                                Daftar Aktivitas
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -260,19 +219,19 @@ export default function LogActivityPage() {
                                                     No
                                                 </th>
                                                 <th className="text-left p-3 text-sm font-semibold text-[#53589a]">
-                                                    User
+                                                    Session
+                                                </th>
+                                                <th className="text-left p-3 text-sm font-semibold text-[#53589a]">
+                                                    Info
+                                                </th>
+                                                <th className="text-left p-3 text-sm font-semibold text-[#53589a]">
+                                                    Context
                                                 </th>
                                                 <th className="text-left p-3 text-sm font-semibold text-[#53589a]">
                                                     Kategori
                                                 </th>
                                                 <th className="text-left p-3 text-sm font-semibold text-[#53589a]">
-                                                    Paslon Dipilih
-                                                </th>
-                                                <th className="text-left p-3 text-sm font-semibold text-[#53589a]">
-                                                    Waktu Vote
-                                                </th>
-                                                <th className="text-left p-3 text-sm font-semibold text-[#53589a]">
-                                                    IP Address
+                                                    Waktu
                                                 </th>
                                             </tr>
                                         </thead>
@@ -283,75 +242,35 @@ export default function LogActivityPage() {
                                                     className="border-b border-gray-100 hover:bg-gray-50"
                                                 >
                                                     <td className="p-3 text-sm">
-                                                        {(pagination.current_page - 1) *
-                                                            pagination.per_page +
-                                                            index +
-                                                            1}
+                                                        {index + 1}
                                                     </td>
                                                     <td className="p-3">
-                                                        <div>
-                                                            <p className="text-sm font-medium text-gray-900">
-                                                                {log.user_name}
-                                                            </p>
-                                                            <p className="text-xs text-gray-500">
-                                                                {log.user_email}
-                                                            </p>
-                                                        </div>
+                                                        <p className="text-sm font-medium text-gray-900">
+                                                            {log.session}
+                                                        </p>
                                                     </td>
                                                     <td className="p-3">
-                                                        <Badge className={getRoleBadgeColor(log.user_role || "user")}>
-                                                            {log.user_role === "admin" ? "Admin" : 
-                                                             log.user_role === "super_admin" ? "Super Admin" :
-                                                             log.user_role === "paslon" ? "Paslon" : 
-                                                             "User"}
+                                                        <p className="text-sm text-gray-700 max-w-md truncate" title={log.info}>
+                                                            {log.info}
+                                                        </p>
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <Badge className="bg-gray-500 text-white">
+                                                            {log.context}
                                                         </Badge>
                                                     </td>
                                                     <td className="p-3">
-                                                        <div>
-                                                            <Badge className="bg-[#53589a] text-white mb-1">
-                                                                {log.candidate_name}
-                                                            </Badge>
-                                                            {log.candidate_department && (
-                                                                <p className="text-xs text-gray-500">
-                                                                    {log.candidate_department}
-                                                                </p>
-                                                            )}
-                                                        </div>
+                                                        <Badge className={getRoleBadgeColor(log.subject)}>
+                                                            {getRoleLabel(log.subject)}
+                                                        </Badge>
                                                     </td>
                                                     <td className="p-3 text-sm text-gray-700">
                                                         {formatDateTime(log.created_at)}
-                                                    </td>
-                                                    <td className="p-3 text-sm text-gray-600">
-                                                        {log.ip_address || "-"}
                                                     </td>
                                                 </tr>
                                             ))}
                                         </tbody>
                                     </table>
-                                </div>
-                            )}
-
-                            {/* Pagination */}
-                            {!loading && pagination.last_page > 1 && (
-                                <div className="flex items-center justify-between mt-6 pt-4 border-t">
-                                    <button
-                                        onClick={() => handlePageChange(pagination.current_page - 1)}
-                                        disabled={pagination.current_page === 1}
-                                        className="px-4 py-2 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                                    >
-                                        Sebelumnya
-                                    </button>
-                                    <span className="text-sm text-gray-600">
-                                        Halaman {pagination.current_page} dari{" "}
-                                        {pagination.last_page}
-                                    </span>
-                                    <button
-                                        onClick={() => handlePageChange(pagination.current_page + 1)}
-                                        disabled={pagination.current_page === pagination.last_page}
-                                        className="px-4 py-2 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                                    >
-                                        Selanjutnya
-                                    </button>
                                 </div>
                             )}
                         </CardContent>
