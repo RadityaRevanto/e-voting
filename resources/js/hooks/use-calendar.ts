@@ -173,8 +173,8 @@ export function useCalendar(
 
     // Ref untuk mencegah race condition dan memory leak
     const isFetchingRef = useRef<boolean>(false);
-    const abortControllerRef = useRef<AbortController | null>(null);
     const mountedRef = useRef<boolean>(true);
+    const hasLoadedRef = useRef<boolean>(false);
 
     /**
      * Fetch semua schedules dari API
@@ -190,21 +190,16 @@ export function useCalendar(
             setLoading(true);
             setError(null);
 
-            // Buat AbortController untuk cancel request jika component unmount
-            const abortController = new AbortController();
-            abortControllerRef.current = abortController;
-
             const response = await apiClient.get("/api/schedules", {
                 headers: {
                     Accept: "application/json",
                 },
             });
 
-            // Check jika request di-cancel
-            if (abortController.signal.aborted || !mountedRef.current) {
+            // Check jika component sudah unmount
+            if (!mountedRef.current) {
                 setLoading(false);
                 isFetchingRef.current = false;
-                abortControllerRef.current = null;
                 return;
             }
 
@@ -221,11 +216,10 @@ export function useCalendar(
 
             const data: ScheduleApiResponse = await response.json();
 
-            // Check jika request di-cancel setelah async operation
-            if (abortController.signal.aborted || !mountedRef.current) {
+            // Check jika component sudah unmount setelah async operation
+            if (!mountedRef.current) {
                 setLoading(false);
                 isFetchingRef.current = false;
-                abortControllerRef.current = null;
                 return;
             }
 
@@ -249,13 +243,13 @@ export function useCalendar(
 
             if (mountedRef.current) {
                 setAllSchedules(schedules);
+                hasLoadedRef.current = true;
             }
         } catch (err: unknown) {
-            // Jangan update state jika request di-cancel atau component unmount
-            if (abortControllerRef.current?.signal.aborted || !mountedRef.current) {
+            // Jangan update state jika component unmount
+            if (!mountedRef.current) {
                 setLoading(false);
                 isFetchingRef.current = false;
-                abortControllerRef.current = null;
                 return;
             }
 
@@ -266,16 +260,19 @@ export function useCalendar(
 
             if (mountedRef.current) {
                 setError(errorMessage);
-                setAllSchedules([]);
+                // Jangan reset allSchedules saat error jika data sudah pernah di-load
+                // Hanya reset jika ini adalah first load yang gagal
+                if (!hasLoadedRef.current) {
+                    setAllSchedules([]);
+                }
             }
         } finally {
-            if (!abortControllerRef.current?.signal.aborted && mountedRef.current) {
+            if (mountedRef.current) {
                 setLoading(false);
             }
             isFetchingRef.current = false;
-            abortControllerRef.current = null;
         }
-    }, []);
+    }, []); // ✅ Empty dependencies - fungsi stabil
 
     /**
      * Fetch current event dari API
@@ -329,14 +326,14 @@ export function useCalendar(
                 setCurrentEvent(null);
             }
         }
-    }, []);
+    }, []); // ✅ Empty dependencies - fungsi stabil
 
     /**
      * Refresh schedules (fetch ulang semua data)
      */
     const refreshSchedules = useCallback(async (): Promise<void> => {
         await Promise.all([fetchSchedules(), fetchCurrentEvent()]);
-    }, [fetchSchedules, fetchCurrentEvent]);
+    }, [fetchSchedules, fetchCurrentEvent]); // ✅ Dependencies stabil karena fetchSchedules dan fetchCurrentEvent stabil
 
     /**
      * Set view mode
@@ -360,15 +357,11 @@ export function useCalendar(
             refreshSchedules();
         }
 
-        // Cleanup: cancel request jika component unmount
+        // Cleanup saat component unmount
         return () => {
             mountedRef.current = false;
-            if (abortControllerRef.current) {
-                abortControllerRef.current.abort();
-                abortControllerRef.current = null;
-            }
         };
-    }, [autoFetch, refreshSchedules]);
+    }, [autoFetch, refreshSchedules]); // ✅ refreshSchedules sekarang stabil, tidak menyebabkan infinite loop
 
     return {
         schedules,
@@ -380,4 +373,3 @@ export function useCalendar(
         refreshSchedules,
     };
 }
-
