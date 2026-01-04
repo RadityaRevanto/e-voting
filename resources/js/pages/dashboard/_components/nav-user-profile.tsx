@@ -8,6 +8,7 @@ import {
 import { Link } from "@inertiajs/react"
 import { useSidebar } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
+import { useInitials } from "@/hooks/use-initials"
 
 export function NavUserProfile({
   user,
@@ -23,13 +24,10 @@ export function NavUserProfile({
   const { state } = useSidebar()
   const isCollapsed = state === "collapsed"
   const [imageError, setImageError] = useState(false)
+  const getInitials = useInitials()
   
-  const initials = user.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2)
+  // Gunakan hook useInitials untuk mendapatkan inisial
+  const initials = getInitials(user.name) || "AE"
 
   // Reset error saat avatar URL berubah
   useEffect(() => {
@@ -50,7 +48,7 @@ export function NavUserProfile({
         "transition-all",
         isCollapsed ? "h-10 w-10" : "h-20 w-20 mb-3"
       )}>
-        {!imageError && user.avatar && user.avatar !== "/avatars/shadcn.jpg" ? (
+        {!imageError && user.avatar ? (
           <AvatarImage 
             src={user.avatar} 
             alt={user.name}
@@ -58,6 +56,7 @@ export function NavUserProfile({
           />
         ) : null}
         <AvatarFallback className={cn(
+          "bg-muted flex size-full items-center justify-center rounded-full",
           isCollapsed ? "text-xs" : "text-lg"
         )}>{initials}</AvatarFallback>
       </Avatar>

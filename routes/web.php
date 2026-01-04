@@ -139,6 +139,11 @@ Route::prefix('admin')->group(function () {
     Route::get('settings/term-of', function () {
         return Inertia::render('dashboard/admin/settings/term-of/page');
     })->name('admin.settings.term-of');
+
+    // Profile View (Read-only) - hanya menampilkan foto yang sudah di-post
+    Route::get('profile', function () {
+        return Inertia::render('dashboard/admin/profile/page');
+    })->name('admin.profile');
 });
 
 /*
