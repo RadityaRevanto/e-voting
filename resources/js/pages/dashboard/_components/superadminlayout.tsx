@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import * as React from "react"
-import { Activity, UserPlus } from "lucide-react"
+import { Activity, UserPlus, Calendar } from "lucide-react"
 import { usePage } from "@inertiajs/react"
 import { NavMain } from "@/pages/dashboard/_components/nav-main"
 import { LogoutConfirmation } from "@/pages/dashboard/_components/logout-confirmation"
@@ -44,6 +44,11 @@ function AppSidebarSuperadmin({ ...props }: React.ComponentProps<typeof Sidebar>
         title: "Create Admin",
         url: "/superadmin/akun-admin",
         icon: UserPlus,
+      },
+      {
+        title: "Schedule",
+        url: "/superadmin/schedule",
+        icon: Calendar,
       },
     ],
   };

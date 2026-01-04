@@ -190,7 +190,7 @@ export function useElectionActivities(
         throw new Error(errorMessage);
       }
 
-      // Parse response JSON (mengikuti pola use-calendar.ts)
+      // Parse response JSON dari API GET /api/schedules/
       let data: ScheduleApiResponse;
       try {
         data = await response.json();
@@ -207,7 +207,8 @@ export function useElectionActivities(
         return;
       }
 
-      // Handle response yang tidak success atau data null (mengikuti pola use-calendar.ts)
+      // Handle response yang tidak success atau data null
+      // API GET /api/schedules/ selalu mengembalikan array dari Schedule::all()
       if (!data.success) {
         if (data.data === null || (Array.isArray(data.data) && data.data.length === 0)) {
           setActivities([]);
@@ -218,7 +219,8 @@ export function useElectionActivities(
         }
       }
 
-      // Normalize data ke array (mengikuti pola use-calendar.ts)
+      // Normalize data ke array
+      // Controller ScheduleController::index() selalu mengembalikan array
       let schedules: ScheduleFromBackend[] = [];
 
       if (data.data === null) {
@@ -237,7 +239,7 @@ export function useElectionActivities(
           );
         });
       } else if (typeof data.data === 'object' && data.data !== null) {
-        // Validasi single object
+        // Validasi single object (defensive programming, meskipun controller selalu return array)
         const item = data.data as ScheduleFromBackend;
         if (
           typeof item.id === 'number' &&
