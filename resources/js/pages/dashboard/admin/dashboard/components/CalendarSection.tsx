@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCalendar, CalendarPeriod } from "@/hooks/use-calendar";
+import { useCalendar, type CalendarView, type Schedule } from "@/hooks/use-calendar";
 
 const formatTime = (dateString: string): string => {
   try {
@@ -13,15 +13,27 @@ const formatTime = (dateString: string): string => {
   }
 };
 
-const combineTimes = (events: Array<{ startTime: string; endTime: string }>): { startTime: string; endTime: string } | null => {
-  if (events.length === 0) return null;
+const formatDate = (dateString: string): string => {
+  try {
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  } catch {
+    return "";
+  }
+};
+
+const combineTimes = (schedules: Schedule[]): { startTime: string; endTime: string; date: string } | null => {
+  if (schedules.length === 0) return null;
   
   const startTimes: string[] = [];
   const endTimes: string[] = [];
   
-  events.forEach((event) => {
-    const startTime = formatTime(event.startTime);
-    const endTime = formatTime(event.endTime);
+  schedules.forEach((schedule) => {
+    const startTime = formatTime(schedule.start_time);
+    const endTime = formatTime(schedule.end_time);
     if (startTime && !startTimes.includes(startTime)) {
       startTimes.push(startTime);
     }
@@ -42,30 +54,42 @@ const combineTimes = (events: Array<{ startTime: string; endTime: string }>): { 
   const sortedStartTimes = sortTimes([...startTimes]);
   const sortedEndTimes = sortTimes([...endTimes]);
   
+  // Ambil tanggal dari schedule pertama
+  const date = formatDate(schedules[0].start_time);
+  
   return {
     startTime: sortedStartTimes[0] || "",
     endTime: sortedEndTimes[sortedEndTimes.length - 1] || "",
+    date: date,
   };
 };
 
 export const CalendarSection: React.FC = () => {
   const {
-    events,
+    schedules,
     loading,
     error,
-    selectedPeriod,
-    setSelectedPeriod,
+    view,
+    setView,
+    refreshSchedules,
   } = useCalendar(true, "today");
 
-  const registrationEvents = events.filter((event) => event.tag === "registration");
-  const votingEvents = events.filter((event) => event.tag === "voting");
-  const registrationTimes = combineTimes(registrationEvents);
-  const votingTimes = combineTimes(votingEvents);
-  const hasRegistration = registrationEvents.length > 0;
-  const hasVoting = votingEvents.length > 0;
+  const registrationSchedules = schedules.filter((schedule) => schedule.tag === "registration");
+  const votingSchedules = schedules.filter((schedule) => schedule.tag === "voting");
+  const announcementSchedules = schedules.filter((schedule) => schedule.tag === "announcement");
+  const registrationTimes = combineTimes(registrationSchedules);
+  const votingTimes = combineTimes(votingSchedules);
+  const announcementTimes = combineTimes(announcementSchedules);
+  const hasRegistration = registrationSchedules.length > 0;
+  const hasVoting = votingSchedules.length > 0;
+  const hasAnnouncement = announcementSchedules.length > 0;
 
-  const handlePeriodClick = (period: CalendarPeriod) => {
-    setSelectedPeriod(period);
+  const handleViewClick = (newView: CalendarView) => {
+    setView(newView);
+  };
+
+  const handleRetry = () => {
+    refreshSchedules();
   };
 
   return (
@@ -81,13 +105,13 @@ export const CalendarSection: React.FC = () => {
       <CardContent>
         <div className="flex items-center -mt-5 gap-3 md:gap-4 mb-3 md:mb-4">
           <button
-            onClick={() => handlePeriodClick("today")}
+            onClick={() => handleViewClick("today")}
             className="flex flex-col items-start cursor-pointer hover:opacity-80 transition-opacity min-h-[28px] md:min-h-[32px]"
             aria-label="Filter calendar untuk hari ini"
           >
             <span
               className={`text-xs md:text-sm font-bold ${
-                selectedPeriod === "today"
+                view === "today"
                   ? "text-[#53589a]"
                   : "text-[#8e8fa0]"
               }`}
@@ -95,19 +119,19 @@ export const CalendarSection: React.FC = () => {
               Today
             </span>
             <div className="w-[50px] md:w-[60px] h-0.5 rounded-full mt-1">
-              {selectedPeriod === "today" && (
+              {view === "today" && (
                 <div className="w-full h-full bg-[#53599b]" />
               )}
             </div>
           </button>
           <button
-            onClick={() => handlePeriodClick("next_week")}
+            onClick={() => handleViewClick("nextWeek")}
             className="flex flex-col items-start cursor-pointer hover:opacity-80 transition-opacity min-h-[28px] md:min-h-[32px]"
             aria-label="Filter calendar untuk minggu depan"
           >
             <span
               className={`text-xs md:text-sm font-bold ${
-                selectedPeriod === "next_week"
+                view === "nextWeek"
                   ? "text-[#53589a]"
                   : "text-[#8e8fa0]"
               }`}
@@ -115,19 +139,19 @@ export const CalendarSection: React.FC = () => {
               Next Week
             </span>
             <div className="w-[50px] md:w-[60px] h-0.5 rounded-full mt-1">
-              {selectedPeriod === "next_week" && (
+              {view === "nextWeek" && (
                 <div className="w-full h-full bg-[#53599b]" />
               )}
             </div>
           </button>
           <button
-            onClick={() => handlePeriodClick("this_month")}
+            onClick={() => handleViewClick("thisMonth")}
             className="flex flex-col items-start cursor-pointer hover:opacity-80 transition-opacity min-h-[28px] md:min-h-[32px]"
             aria-label="Filter calendar untuk bulan ini"
           >
             <span
               className={`text-xs md:text-sm font-bold ${
-                selectedPeriod === "this_month"
+                view === "thisMonth"
                   ? "text-[#53589a]"
                   : "text-[#8e8fa0]"
               }`}
@@ -135,26 +159,47 @@ export const CalendarSection: React.FC = () => {
               This Month
             </span>
             <div className="w-[50px] md:w-[60px] h-0.5 rounded-full mt-1">
-              {selectedPeriod === "this_month" && (
+              {view === "thisMonth" && (
                 <div className="w-full h-full bg-[#53599b]" />
               )}
             </div>
           </button>
         </div>
 
-        {loading && (
-          <div className="mt-4 md:mt-5 xl:mt-6 text-center text-[#8e8fa0] text-sm">
-            Memuat data...
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-8 space-y-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#53599b]"></div>
+            <p className="text-[#53599b] text-sm md:text-base">Memuat data...</p>
           </div>
-        )}
-
-        {error && (
-          <div className="mt-4 md:mt-5 xl:mt-6 text-center text-red-500 text-sm">
-            {error}
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-8 space-y-4">
+            <div className="flex flex-col items-center space-y-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-red-500"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <p className="text-red-500 text-sm md:text-base text-center max-w-xs">{error}</p>
+            </div>
+            <button
+              onClick={handleRetry}
+              className="px-4 py-2 text-sm md:text-base text-[#53599b] border border-[#53599b] rounded-lg hover:bg-[#53599b] hover:text-white transition-colors font-medium"
+            >
+              Coba Lagi
+            </button>
           </div>
-        )}
-
-        {!loading && !error && (
+        ) : (
           <div className="mt-4 md:mt-5 xl:mt-6 space-y-3 md:space-y-4">
             {hasRegistration && registrationTimes && (
               <div>
@@ -164,12 +209,17 @@ export const CalendarSection: React.FC = () => {
                   </p>
                 </div>
                 <div className="h-0.5 bg-[#8e8fa0cc] rounded-full mb-2" />
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mb-1">
                   <p className="text-[#53599b] text-xs md:text-sm">
                     {registrationTimes.startTime}
                   </p>
                   <p className="text-[#53599b] text-xs md:text-sm">
                     {registrationTimes.endTime}
+                  </p>
+                </div>
+                <div className="flex justify-center items-center">
+                  <p className="text-[#8e8fa0] text-xs md:text-sm">
+                    {registrationTimes.date}
                   </p>
                 </div>
               </div>
@@ -183,7 +233,7 @@ export const CalendarSection: React.FC = () => {
                   </p>
                 </div>
                 <div className="h-0.5 bg-[#8e8fa0cc] rounded-full mb-2" />
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mb-1">
                   <p className="text-[#53599b] text-xs md:text-sm">
                     {votingTimes.startTime}
                   </p>
@@ -191,10 +241,39 @@ export const CalendarSection: React.FC = () => {
                     {votingTimes.endTime}
                   </p>
                 </div>
+                <div className="flex justify-center items-center">
+                  <p className="text-[#8e8fa0] text-xs md:text-sm">
+                    {votingTimes.date}
+                  </p>
+                </div>
               </div>
             )}
 
-            {!hasRegistration && !hasVoting && (
+            {hasAnnouncement && announcementTimes && (
+              <div>
+                <div className="bg-[#dbdefc] rounded-[8px] md:rounded-[10px] p-3 md:p-4 text-center mb-2">
+                  <p className="text-[#53599b] text-sm md:text-base font-bold">
+                    Pengumuman
+                  </p>
+                </div>
+                <div className="h-0.5 bg-[#8e8fa0cc] rounded-full mb-2" />
+                <div className="flex justify-between items-center mb-1">
+                  <p className="text-[#53599b] text-xs md:text-sm">
+                    {announcementTimes.startTime}
+                  </p>
+                  <p className="text-[#53599b] text-xs md:text-sm">
+                    {announcementTimes.endTime}
+                  </p>
+                </div>
+                <div className="flex justify-center items-center">
+                  <p className="text-[#8e8fa0] text-xs md:text-sm">
+                    {announcementTimes.date}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {!hasRegistration && !hasVoting && !hasAnnouncement && (
               <div className="text-center text-[#8e8fa0] text-sm">
                 Tidak ada event untuk periode ini
               </div>

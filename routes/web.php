@@ -192,6 +192,10 @@ Route::prefix('superadmin')->group(function () {
     Route::get('akun-admin', function () {
         return Inertia::render('dashboard/superadmin/akun-admin/page');
     })->name('superadmin.akun-admin');
+
+    Route::get('schedule', function () {
+        return Inertia::render('dashboard/superadmin/schedule/page');
+    })->name('superadmin.schedule');
 });
 
 /*
