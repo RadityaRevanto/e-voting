@@ -11,6 +11,7 @@ import {
 import { usePage } from "@inertiajs/react"
 import { isSameUrl } from "@/lib/utils"
 import { useCurrentUser } from "@/hooks/use-current-user"
+import { apiClient } from "@/lib/api-client"
 
 import { NavMain } from "@/pages/dashboard/_components/nav-main"
 import { NavUserProfile } from "@/pages/dashboard/_components/nav-user-profile"
@@ -57,23 +58,63 @@ const navItems = [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const page = usePage()
   const currentUrl = page.url
-  const { user, loading } = useCurrentUser()
+  const { user, loading: userLoading } = useCurrentUser()
+  const [fotoAdmin, setFotoAdmin] = React.useState<string | null>(null)
+  const [fotoError, setFotoError] = React.useState(false)
+  const [loadingFoto, setLoadingFoto] = React.useState(true)
+
+  // Fetch data admin untuk mendapatkan foto profil
+  React.useEffect(() => {
+    const fetchAdminProfile = async () => {
+      try {
+        setLoadingFoto(true)
+        setFotoError(false)
+        const response = await apiClient.get("/api/admin/profile")
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.data?.foto_admin) {
+            setFotoAdmin(data.data.foto_admin)
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching admin profile:", error)
+        setFotoError(true)
+      } finally {
+        setLoadingFoto(false)
+      }
+    }
+
+    if (!userLoading && user) {
+      fetchAdminProfile()
+    }
+  }, [user, userLoading])
 
   const navMain = navItems.map((item) => ({
     ...item,
     isActive: isSameUrl(currentUrl, item.url),
   }))
 
+  // Handler untuk mendapatkan URL avatar
+  const getAvatarUrl = (): string => {
+    if (fotoAdmin && !fotoError) {
+      return `/storage/${fotoAdmin}`
+    }
+    return "" // Kosongkan agar fallback ke inisial
+  }
+
   // Default user data jika masih loading atau error
   const userData = user ? {
     name: user.name,
     email: user.email,
-    avatar: "/avatars/shadcn.jpg", // Default avatar, bisa diganti jika ada di API
+    avatar: getAvatarUrl(),
   } : {
     name: "User",
     email: "",
-    avatar: "/avatars/shadcn.jpg",
+    avatar: "",
   }
+
+  const loading = userLoading || loadingFoto
 
   return (
     <Sidebar 
@@ -89,7 +130,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <div className="h-6 w-32 bg-gray-200 animate-pulse rounded mb-1 mt-3" />
           </div>
         ) : (
-          <NavUserProfile user={userData} />
+          <NavUserProfile user={userData} profileUrl="/admin/profile" />
         )}
       </SidebarHeader>
       <SidebarContent className="px-2 group-data-[collapsible=icon]:px-1">

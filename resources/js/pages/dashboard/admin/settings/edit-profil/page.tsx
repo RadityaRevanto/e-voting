@@ -1,153 +1,26 @@
 import AdminDashboardlayout from "../../../_components/adminlayout";
-import { useState, FormEvent, useRef, ChangeEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import InputError from "@/pages/dashboard/_components/input-error";
+import { useEditProfilAdmin } from "@/hooks/use-edit-profil-admin";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function AdminEditProfilPage() {
-    const [nama, setNama] = useState("");
-    const [fotoProfil, setFotoProfil] = useState<File | null>(null);
-    const [previewFoto, setPreviewFoto] = useState<string | null>(null);
-    const [errors, setErrors] = useState<{
-        nama?: string;
-        foto_profil?: string;
-        message?: string;
-    }>({});
-    const [success, setSuccess] = useState("");
-    const [processing, setProcessing] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const handleFotoChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        // Validasi ukuran file (maksimal 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            setErrors({
-                foto_profil: "Ukuran file maksimal 5MB",
-            });
-            return;
-        }
-
-        // Validasi tipe file
-        if (!file.type.startsWith("image/")) {
-            setErrors({
-                foto_profil: "File harus berupa gambar",
-            });
-            return;
-        }
-
-        setFotoProfil(file);
-        setErrors((prev) => ({ ...prev, foto_profil: undefined }));
-
-        // Buat preview
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setPreviewFoto(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-    };
-
-    const handleHapusFoto = () => {
-        setFotoProfil(null);
-        setPreviewFoto(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
-    };
-
-    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setErrors({});
-        setSuccess("");
-        setProcessing(true);
-
-        // Validasi client-side
-        if (!nama.trim()) {
-            setErrors({
-                nama: "Nama harus diisi",
-            });
-            setProcessing(false);
-            return;
-        }
-
-        try {
-            const csrfToken = document
-                .querySelector('meta[name="csrf-token"]')
-                ?.getAttribute("content") || "";
-
-            // Jika ada foto profil, gunakan FormData, jika tidak gunakan JSON
-            if (fotoProfil) {
-                const formData = new FormData();
-                formData.append("nama", nama);
-                formData.append("foto_profil", fotoProfil);
-
-                const response = await fetch("/settings/profile", {
-                    method: "PUT",
-                    headers: {
-                        "X-CSRF-TOKEN": csrfToken,
-                        "Accept": "application/json",
-                    },
-                    body: formData,
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    if (data.errors) {
-                        setErrors(data.errors);
-                    } else if (data.message) {
-                        setErrors({ message: data.message });
-                    } else {
-                        setErrors({ message: "Terjadi kesalahan saat mengubah profil" });
-                    }
-                    setProcessing(false);
-                    return;
-                }
-            } else {
-                const response = await fetch("/settings/profile", {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": csrfToken,
-                        "Accept": "application/json",
-                    },
-                    body: JSON.stringify({
-                        nama,
-                    }),
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    if (data.errors) {
-                        setErrors(data.errors);
-                    } else if (data.message) {
-                        setErrors({ message: data.message });
-                    } else {
-                        setErrors({ message: "Terjadi kesalahan saat mengubah profil" });
-                    }
-                    setProcessing(false);
-                    return;
-                }
-            }
-
-            setSuccess("Profil berhasil diubah!");
-            setErrors({});
-
-            // Reset success message setelah 5 detik
-            setTimeout(() => {
-                setSuccess("");
-            }, 5000);
-        } catch (error) {
-            console.error("Error updating profile:", error);
-            setErrors({
-                message: "Terjadi kesalahan saat mengubah profil. Silakan coba lagi.",
-            });
-        } finally {
-            setProcessing(false);
-        }
-    };
+    const {
+        username,
+        fotoProfil,
+        previewFoto,
+        existingFotoUrl,
+        errors,
+        success,
+        processing,
+        fileInputRef,
+        setUsername,
+        handleFotoChange,
+        handleHapusFoto,
+        handleSubmit,
+        getAvatarInitials,
+    } = useEditProfilAdmin();
 
     return (
         <AdminDashboardlayout>
@@ -181,66 +54,81 @@ export default function AdminEditProfilPage() {
                             >
                                 Foto Profil
                             </label>
-                            {previewFoto ? (
-                                <div className="space-y-3">
+                            <div className="space-y-3">
+                                {previewFoto ? (
                                     <div className="relative inline-block">
                                         <img
                                             src={previewFoto}
                                             alt="Preview foto profil"
                                             className="w-32 h-32 object-cover rounded-full border-4 border-gray-200"
                                         />
+                                        {(previewFoto.startsWith("data:") || fotoProfil) && (
+                                            <Button
+                                                type="button"
+                                                onClick={handleHapusFoto}
+                                                disabled={processing}
+                                                className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 p-0 flex items-center justify-center"
+                                                aria-label="Hapus foto"
+                                            >
+                                                ×
+                                            </Button>
+                                        )}
                                     </div>
-                                    <div>
-                                        <Button
-                                            type="button"
-                                            onClick={handleHapusFoto}
-                                            variant="outline"
-                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                        >
-                                            Hapus Foto
-                                        </Button>
+                                ) : existingFotoUrl ? (
+                                    <div className="relative inline-block">
+                                        <img
+                                            src={`/storage/${existingFotoUrl}`}
+                                            alt="Foto profil"
+                                            className="w-32 h-32 object-cover rounded-full border-4 border-gray-200"
+                                        />
                                     </div>
-                                </div>
-                            ) : (
+                                ) : (
+                                    <Avatar className="w-32 h-32 border-4 border-gray-200">
+                                        <AvatarImage src="" alt="Foto profil" />
+                                        <AvatarFallback className="bg-muted flex size-full items-center justify-center rounded-full text-lg">
+                                            {getAvatarInitials() || "AE"}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                )}
                                 <div className="space-y-2">
                                     <Input
                                         ref={fileInputRef}
                                         id="foto_profil"
                                         name="foto_profil"
                                         type="file"
-                                        accept="image/*"
+                                        accept="image/jpeg,image/jpg,image/png"
                                         onChange={handleFotoChange}
                                         className="w-full cursor-pointer"
                                         disabled={processing}
-                                        aria-invalid={errors.foto_profil ? "true" : "false"}
+                                        aria-invalid={errors.foto_path ? "true" : "false"}
                                     />
                                     <p className="text-xs text-gray-500">
-                                        Pilih file gambar (JPG, PNG, maksimal 5MB)
+                                        Pilih file gambar (JPG, PNG, maksimal 2MB)
                                     </p>
                                 </div>
-                            )}
-                            <InputError message={errors.foto_profil} />
+                            </div>
+                            <InputError message={errors.foto_path} />
                         </div>
 
-                        {/* Nama */}
+                        {/* Username */}
                         <div className="space-y-2">
                             <label
-                                htmlFor="nama"
+                                htmlFor="username"
                                 className="block text-sm font-medium text-gray-700"
                             >
-                                Nama
+                                Username
                             </label>
                             <Input
-                                id="nama"
+                                id="username"
                                 type="text"
-                                value={nama}
-                                onChange={(e) => setNama(e.target.value)}
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
                                 className="w-full"
                                 disabled={processing}
-                                placeholder="Masukkan nama lengkap"
-                                aria-invalid={errors.nama ? "true" : "false"}
+                                placeholder="Masukkan username"
+                                aria-invalid={errors.username ? "true" : "false"}
                             />
-                            <InputError message={errors.nama} />
+                            <InputError message={errors.username} />
                         </div>
 
                         <div className="flex gap-4 pt-4">
