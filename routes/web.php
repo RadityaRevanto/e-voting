@@ -115,6 +115,11 @@ Route::prefix('admin')->group(function () {
         return Inertia::render('dashboard/admin/generate/page');
     })->name('admin.generate');
 
+    // Register NIK
+    Route::get('register-nik', function () {
+        return Inertia::render('dashboard/admin/register-nik/page');
+    })->name('admin.register-nik');
+
     // Settings
     Route::get('settings', function () {
         return Inertia::render('dashboard/admin/settings/page');
@@ -204,4 +209,4 @@ Route::prefix('superadmin')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';
