@@ -7,6 +7,7 @@ import {
   FileText,
   Sparkles,
   Settings2,
+  UserPlus,
 } from "lucide-react"
 import { usePage } from "@inertiajs/react"
 import { isSameUrl } from "@/lib/utils"
@@ -37,6 +38,11 @@ const navItems = [
     title: "Vote",
     url: "/admin/vote",
     icon: CheckSquare,
+  },
+  {
+    title: "Register NIK",
+    url: "/admin/register-nik",
+    icon: UserPlus,
   },
   {
     title: "Vote Guideline",
