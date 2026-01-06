@@ -34,7 +34,7 @@ export const ElectionActivitiesSection: React.FC = () => {
 
   return (
     <Card
-      className="border-2 border-[#80808080] shadow-[0px_4px_4px_#00000040] rounded-[20px] md:rounded-[25px] xl:rounded-[30px]"
+      className="border-2 border-[#80808080] shadow-[0px_4px_4px_#00000040] rounded-[20px] md:rounded-[25px] xl:rounded-[30px] animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200"
       aria-labelledby="election-activities-title"
     >
       <CardHeader className="pb-4 md:pb-5 xl:pb-6">

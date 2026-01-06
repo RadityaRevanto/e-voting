@@ -13,6 +13,7 @@ import { usePage } from "@inertiajs/react"
 import { isSameUrl } from "@/lib/utils"
 import { useCurrentUser } from "@/hooks/use-current-user"
 import { apiClient } from "@/lib/api-client"
+import { useProfilePhotoCache } from "@/hooks/use-profile-photo-cache"
 
 import { NavMain } from "@/pages/dashboard/_components/nav-main"
 import { NavUserProfile } from "@/pages/dashboard/_components/nav-user-profile"
@@ -65,36 +66,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const page = usePage()
   const currentUrl = page.url
   const { user, loading: userLoading } = useCurrentUser()
-  const [fotoAdmin, setFotoAdmin] = React.useState<string | null>(null)
-  const [fotoError, setFotoError] = React.useState(false)
-  const [loadingFoto, setLoadingFoto] = React.useState(true)
-
-  // Fetch data admin untuk mendapatkan foto profil
-  React.useEffect(() => {
-    const fetchAdminProfile = async () => {
+  
+  // Gunakan cache untuk foto profile agar tidak re-fetch setiap ganti halaman
+  const { photo: fotoAdmin, loading: loadingFoto, error: fotoError } = useProfilePhotoCache(
+    "admin",
+    React.useCallback(async () => {
+      if (!user) return null
       try {
-        setLoadingFoto(true)
-        setFotoError(false)
         const response = await apiClient.get("/api/admin/profile")
-
         if (response.ok) {
           const data = await response.json()
           if (data.success && data.data?.foto_admin) {
-            setFotoAdmin(data.data.foto_admin)
+            return data.data.foto_admin
           }
         }
+        return null
       } catch (error) {
         console.error("Error fetching admin profile:", error)
-        setFotoError(true)
-      } finally {
-        setLoadingFoto(false)
+        return null
       }
-    }
-
-    if (!userLoading && user) {
-      fetchAdminProfile()
-    }
-  }, [user, userLoading])
+    }, [user])
+  )
 
   const navMain = navItems.map((item) => ({
     ...item,

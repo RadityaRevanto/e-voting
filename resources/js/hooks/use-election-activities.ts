@@ -123,7 +123,6 @@ export function useElectionActivities(
 
   // Ref untuk mencegah race condition dan memory leak
   const isFetchingRef = useRef<boolean>(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
   const mountedRef = useRef<boolean>(true);
 
   /**
@@ -140,22 +139,16 @@ export function useElectionActivities(
       setLoading(true);
       setError(null);
 
-      // Buat AbortController untuk cancel request jika component unmount
-      const abortController = new AbortController();
-      abortControllerRef.current = abortController;
-
       const response = await apiClient.get("/api/schedules", {
         headers: {
           Accept: "application/json",
         },
-        signal: abortController.signal,
       });
 
-      // Check jika request di-cancel
-      if (abortController.signal.aborted || !mountedRef.current) {
+      // Check jika component sudah unmount
+      if (!mountedRef.current) {
         setLoading(false);
         isFetchingRef.current = false;
-        abortControllerRef.current = null;
         return;
       }
 
@@ -172,11 +165,10 @@ export function useElectionActivities(
 
       const data: ScheduleApiResponse = await response.json();
 
-      // Check jika request di-cancel setelah async operation
-      if (abortController.signal.aborted || !mountedRef.current) {
+      // Check jika component sudah unmount
+      if (!mountedRef.current) {
         setLoading(false);
         isFetchingRef.current = false;
-        abortControllerRef.current = null;
         return;
       }
 
@@ -217,11 +209,10 @@ export function useElectionActivities(
         setActivities(transformedActivities);
       }
     } catch (err: unknown) {
-      // Jangan update state jika request di-cancel atau component unmount
-      if (abortControllerRef.current?.signal.aborted || !mountedRef.current) {
+      // Jangan update state jika component sudah unmount
+      if (!mountedRef.current) {
         setLoading(false);
         isFetchingRef.current = false;
-        abortControllerRef.current = null;
         return;
       }
 
@@ -235,11 +226,10 @@ export function useElectionActivities(
         setActivities([]);
       }
     } finally {
-      if (!abortControllerRef.current?.signal.aborted && mountedRef.current) {
+      if (mountedRef.current) {
         setLoading(false);
       }
       isFetchingRef.current = false;
-      abortControllerRef.current = null;
     }
   }, []);
 
@@ -258,13 +248,9 @@ export function useElectionActivities(
       fetchActivities();
     }
 
-    // Cleanup: cancel request jika component unmount
+    // Cleanup: set mounted ke false saat component unmount
     return () => {
       mountedRef.current = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        abortControllerRef.current = null;
-      }
     };
   }, [autoFetch, fetchActivities]);
 

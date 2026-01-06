@@ -10,7 +10,7 @@ export const OngoingElectionSection: React.FC = () => {
 
   return (
     <Card
-      className="border-2 border-[#80808080] shadow-[0px_4px_4px_#00000040] rounded-[20px] md:rounded-[25px] xl:rounded-[30px] relative overflow-hidden pb-0"
+      className="border-2 border-[#80808080] shadow-[0px_4px_4px_#00000040] rounded-[20px] md:rounded-[25px] xl:rounded-[30px] relative overflow-hidden pb-0 animate-in fade-in slide-in-from-bottom-4 duration-700"
       aria-labelledby="ongoing-election-title"
     >
       <CardHeader className="pb-2 md:pb-3">
@@ -41,9 +41,10 @@ export const OngoingElectionSection: React.FC = () => {
 
           <div className="hidden -mt-15 w-100 md:pb-0 md:flex self-end">
             <img
-              className="w-[300px] md:w-[400px] xl:w-[500px] h-[210px] md:h-[280px] xl:h-[350px] object-contain"
+              className="w-[300px] md:w-[400px] xl:w-[500px] h-[210px] md:h-[280px] xl:h-[350px] object-contain animate-in fade-in slide-in-from-right-4 duration-700"
               alt="Village Head Election illustration showing people voting"
               src="/assets/images/admin/dashboard/selection.png"
+              loading="lazy"
             />
           </div>
         </div>

@@ -94,7 +94,7 @@ export const CalendarSection: React.FC = () => {
 
   return (
     <Card
-      className="rounded-[20px] md:rounded-[25px] xl:rounded-[30px] border-2 border-[#80808080] shadow-[0px_4px_4px_#00000040]"
+      className="rounded-[20px] md:rounded-[25px] xl:rounded-[30px] border-2 border-[#80808080] shadow-[0px_4px_4px_#00000040] animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300"
       aria-label="Calendar"
     >
       <CardHeader className="pb-3 md:pb-4">
