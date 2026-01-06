@@ -1,4 +1,4 @@
-  import { ReactNode, useState, useEffect } from "react";
+  import { ReactNode, useState, useEffect, useCallback } from "react";
   import * as React from "react"
   import {
     Home,
@@ -10,6 +10,7 @@ import { usePage } from "@inertiajs/react"
   import { NavUserProfile } from "@/pages/dashboard/_components/nav-user-profile"
   import { useCurrentUser } from "@/hooks/use-current-user"
   import { apiClient } from "@/lib/api-client"
+  import { useProfilePhotoCache } from "@/hooks/use-profile-photo-cache"
   import {
     Sidebar,
     SidebarContent,
@@ -37,36 +38,29 @@ import { usePage } from "@inertiajs/react"
   function AppSidebarPaslon({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { url: currentUrl } = usePage();
   const { user, loading: userLoading } = useCurrentUser();
-  const [fotoPaslon, setFotoPaslon] = useState<string | null>(null);
-  const [fotoError, setFotoError] = useState(false);
-  const [loadingPaslon, setLoadingPaslon] = useState(true);
-
-  // Fetch data paslon untuk mendapatkan foto profil
-  useEffect(() => {
-    const fetchPaslonProfile = async () => {
-      try {
-        setLoadingPaslon(true);
-        setFotoError(false);
-        const response = await apiClient.get("/api/paslon/profile");
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.data?.foto_paslon) {
-            setFotoPaslon(data.data.foto_paslon);
-          }
+  
+  // Gunakan cache untuk foto profile agar tidak re-fetch setiap ganti halaman
+  const fetchPaslonProfile = useCallback(async () => {
+    if (!user) return null;
+    try {
+      const response = await apiClient.get("/api/paslon/profile");
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data?.foto_paslon) {
+          return data.data.foto_paslon;
         }
-      } catch (error) {
-        console.error("Error fetching paslon profile:", error);
-        setFotoError(true);
-      } finally {
-        setLoadingPaslon(false);
       }
-    };
-
-    if (!userLoading && user) {
-      fetchPaslonProfile();
+      return null;
+    } catch (error) {
+      console.error("Error fetching paslon profile:", error);
+      return null;
     }
-  }, [user, userLoading]);
+  }, [user]);
+
+  const { photo: fotoPaslon, loading: loadingPaslon, error: fotoError } = useProfilePhotoCache(
+    "paslon",
+    fetchPaslonProfile
+  );
 
   const navMain = [
     {
@@ -179,7 +173,7 @@ import { usePage } from "@inertiajs/react"
               </Breadcrumb>
             </div>
           </header>
-          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+          <div className="flex flex-1 flex-col gap-4 p-4 pt-0 animate-in fade-in duration-500">
             {children}
           </div>
         </SidebarInset>

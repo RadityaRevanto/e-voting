@@ -22,7 +22,7 @@ export const LiveResultsSection: React.FC = () => {
   }, [results]);
 
   return (
-    <Card className="border-2 border-[#80808080] shadow-[0px_4px_4px_#00000040] rounded-[20px] md:rounded-[25px] xl:rounded-[30px]">
+    <Card className="border-2 border-[#80808080] shadow-[0px_4px_4px_#00000040] rounded-[20px] md:rounded-[25px] xl:rounded-[30px] animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
       <CardHeader className="pb-3 md:pb-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0">
           <CardTitle className="text-[#53599b] text-xl md:text-2xl font-extrabold tracking-wide">

@@ -62,7 +62,7 @@ export const VisionMissionSection = () => {
   }
 
   return (
-    <section className="bg-white rounded-[20px] md:rounded-[25px] xl:rounded-[30px] border-2 border-[#80808080] shadow-[0px_4px_4px_#00000040] p-4 md:p-5 xl:p-6">
+    <section className="bg-white rounded-[20px] md:rounded-[25px] xl:rounded-[30px] border-2 border-[#80808080] shadow-[0px_4px_4px_#00000040] p-4 md:p-5 xl:p-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
       <div className="flex flex-col md:flex-row gap-4 mb-4 md:mb-5">
         <div className="flex-shrink-0">
           <div className="relative w-[100px] h-[100px] md:w-[117px] md:h-[110px]">

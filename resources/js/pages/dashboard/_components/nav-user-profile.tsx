@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, memo } from "react"
 import { ChevronRight } from "lucide-react"
 import {
   Avatar,
@@ -10,7 +10,7 @@ import { useSidebar } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { useInitials } from "@/hooks/use-initials"
 
-export function NavUserProfile({
+export const NavUserProfile = memo(function NavUserProfile({
   user,
   profileUrl,
 }: {
@@ -24,19 +24,27 @@ export function NavUserProfile({
   const { state } = useSidebar()
   const isCollapsed = state === "collapsed"
   const [imageError, setImageError] = useState(false)
+  const [imageLoaded, setImageLoaded] = useState(false)
   const getInitials = useInitials()
   
   // Gunakan hook useInitials untuk mendapatkan inisial
   const initials = getInitials(user.name) || "AE"
 
-  // Reset error saat avatar URL berubah
+  // Reset error dan loaded state saat avatar URL berubah
   useEffect(() => {
     setImageError(false)
+    setImageLoaded(false)
   }, [user.avatar])
 
   // Handler untuk error saat loading gambar
   const handleImageError = () => {
     setImageError(true)
+    setImageLoaded(false)
+  }
+
+  // Handler untuk success loading gambar
+  const handleImageLoad = () => {
+    setImageLoaded(true)
   }
 
   return (
@@ -53,11 +61,17 @@ export function NavUserProfile({
             src={user.avatar} 
             alt={user.name}
             onError={handleImageError}
+            onLoad={handleImageLoad}
+            className={cn(
+              "transition-opacity duration-300",
+              imageLoaded ? "opacity-100" : "opacity-0"
+            )}
           />
         ) : null}
         <AvatarFallback className={cn(
-          "bg-muted flex size-full items-center justify-center rounded-full",
-          isCollapsed ? "text-xs" : "text-lg"
+          "bg-muted flex size-full items-center justify-center rounded-full transition-opacity duration-300",
+          isCollapsed ? "text-xs" : "text-lg",
+          (!user.avatar || imageError || !imageLoaded) ? "opacity-100" : "opacity-0"
         )}>{initials}</AvatarFallback>
       </Avatar>
       {!isCollapsed && (
@@ -76,5 +90,13 @@ export function NavUserProfile({
       )}
     </div>
   )
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison untuk mencegah re-render yang tidak perlu
+  return (
+    prevProps.user.name === nextProps.user.name &&
+    prevProps.user.email === nextProps.user.email &&
+    prevProps.user.avatar === nextProps.user.avatar &&
+    prevProps.profileUrl === nextProps.profileUrl
+  )
+})
 

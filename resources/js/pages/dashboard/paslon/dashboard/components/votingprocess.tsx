@@ -207,7 +207,7 @@ export const VotingProcessSection: React.FC = () => {
       `}</style>
       <Card
         ref={cardRef}
-        className={`border-2 border-[#80808080] shadow-[0px_4px_4px_#00000040] rounded-[20px] md:rounded-[25px] xl:rounded-[30px] transition-all duration-700 ease-out ${
+        className={`border-2 border-[#80808080] shadow-[0px_4px_4px_#00000040] rounded-[20px] md:rounded-[25px] xl:rounded-[30px] transition-all duration-700 ease-out animate-in fade-in slide-in-from-bottom-4 ${
           cardVisible 
             ? "opacity-100 translate-y-0" 
             : "opacity-0 translate-y-4"
