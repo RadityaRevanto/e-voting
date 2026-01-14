@@ -5,7 +5,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2, UserPlus } from "lucide-react";
-import { Head } from "@inertiajs/react";
 import { useRegisterNIK } from "@/hooks/use-register-nik";
 
 export default function RegisterNIKPage() {
@@ -20,7 +19,6 @@ export default function RegisterNIKPage() {
 
     return (
         <AdminDashboardlayout>
-            <Head title="Register NIK" />
             <div className="bg-white w-full min-h-screen p-4 sm:p-6 md:p-8">
                 <div className="w-full">
                     <header className="mb-6 sm:mb-8 md:mb-12">
